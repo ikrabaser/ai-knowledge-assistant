@@ -1,18 +1,61 @@
+/* ---------- Design tokens ---------- */
 :root {
-  --color-bg: #f7f8fa;
-  --color-surface: #ffffff;
-  --color-border: #e2e5ea;
-  --color-text: #1a1d24;
-  --color-text-muted: #6b7280;
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-danger: #dc2626;
-  --color-danger-bg: #fef2f2;
-  --color-success: #059669;
-  --color-success-bg: #ecfdf5;
-  --radius: 10px;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --brand-1: #6366f1;
+  --brand-2: #a855f7;
+  --brand-3: #ec4899;
+  --gradient-brand: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 50%, var(--brand-3) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.15));
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Light theme (default) */
+  --bg: #f7f6fc;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f3f1fb;
+  --surface-sunken: #f1effa;
+  --border: #e6e1f4;
+  --border-strong: #d5cdec;
+  --text: #1a1730;
+  --text-muted: #64607d;
+  --text-faint: #948dad;
+  --shadow-sm: 0 1px 2px rgba(76, 29, 149, 0.06);
+  --shadow-md: 0 8px 24px rgba(76, 29, 149, 0.1);
+  --shadow-glow: 0 0 0 rgba(0, 0, 0, 0);
+
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --warning: #b45309;
+  --warning-bg: #fffbeb;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a0918;
+  --bg-elevated: #131124;
+  --surface: #15132a;
+  --surface-hover: #1d1a38;
+  --surface-sunken: #100e20;
+  --border: #292545;
+  --border-strong: #3a3560;
+  --text: #f1eefb;
+  --text-muted: #a79ecb;
+  --text-faint: #726a96;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
+
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
 }
 
 * {
@@ -27,19 +70,15 @@ body,
 
 body {
   margin: 0;
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  background: var(--color-bg);
-  color: var(--color-text);
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--brand-2);
   text-decoration: none;
 }
 
@@ -49,80 +88,131 @@ textarea,
 select {
   font-family: inherit;
   font-size: 14px;
+  color: inherit;
 }
 
+::selection {
+  background: rgba(168, 85, 247, 0.3);
+}
+
+/* ---------- Logo ---------- */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-wordmark {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- App shell ---------- */
 .app-shell {
   display: flex;
   min-height: 100vh;
+  background: var(--bg);
 }
 
 .sidebar {
-  width: 240px;
+  width: 252px;
   flex-shrink: 0;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-  padding: 20px 16px;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .sidebar-brand {
-  font-weight: 700;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 0 4px;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .sidebar-nav a {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 8px;
-  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
-.sidebar-nav a.active,
 .sidebar-nav a:hover {
-  background: #eef2ff;
-  color: var(--color-primary);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.sidebar-nav a.active {
+  background: var(--gradient-brand-soft);
+  color: var(--brand-2);
 }
 
 .sidebar-footer {
   margin-top: auto;
-  font-size: 13px;
-  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.sidebar-user-email {
+  font-size: 12px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-controls {
+  display: flex;
+  gap: 6px;
 }
 
 .main-content {
   flex: 1;
-  padding: 28px 36px;
-  max-width: 1100px;
+  padding: 32px 40px;
+  max-width: 1120px;
+  min-width: 0;
 }
 
+/* ---------- Typography / layout helpers ---------- */
 .page-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   margin: 0 0 4px;
 }
 
 .page-subtitle {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   margin: 0 0 24px;
   font-size: 14px;
 }
 
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Cards ---------- */
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-sm);
@@ -132,38 +222,59 @@ select {
   margin-top: 16px;
 }
 
+/* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   border: none;
-  border-radius: 8px;
-  padding: 9px 16px;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  background: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
-  transition: background 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  transition: filter 0.12s ease, transform 0.06s ease;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--color-primary-hover);
+  filter: brightness(1.08);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: var(--surface-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  box-shadow: none;
+  padding: 6px 10px;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .btn-sm {
@@ -171,6 +282,7 @@ select {
   font-size: 13px;
 }
 
+/* ---------- Forms ---------- */
 .field {
   display: flex;
   flex-direction: column;
@@ -181,57 +293,75 @@ select {
 .field label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .field input,
 .field textarea,
 .field select {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 9px 12px;
-  background: var(--color-surface);
-  color: var(--color-text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  color: var(--text);
 }
 
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand-2);
   outline-offset: -1px;
 }
 
+/* ---------- Auth pages ---------- */
 .auth-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+    radial-gradient(900px 500px at 100% 10%, rgba(236, 72, 153, 0.14), transparent 55%),
+    var(--bg);
+  position: relative;
+}
+
+.auth-topbar {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  display: flex;
+  gap: 6px;
 }
 
 .auth-card {
-  width: 380px;
+  width: 400px;
   max-width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
 }
 
 .auth-brand {
-  text-align: center;
-  font-weight: 700;
-  font-size: 20px;
-  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .auth-subtitle {
   text-align: center;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 14px;
   margin-bottom: 24px;
 }
 
+/* ---------- Feedback ---------- */
 .error-banner {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-  border-radius: 8px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
   font-size: 13px;
   margin-bottom: 14px;
@@ -239,68 +369,77 @@ select {
 
 .badge {
   display: inline-block;
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .badge-indexed {
-  background: var(--color-success-bg);
-  color: var(--color-success);
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .badge-processing,
 .badge-uploaded {
-  background: #fffbeb;
-  color: #b45309;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .badge-failed {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .empty-state {
   text-align: center;
-  color: var(--color-text-muted);
-  padding: 32px 12px;
+  color: var(--text-faint);
+  padding: 36px 12px;
   font-size: 14px;
 }
 
+/* ---------- Workspace switcher ---------- */
 .workspace-switcher {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
+.workspace-switcher-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+/* ---------- Lists ---------- */
 .list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   margin-bottom: 8px;
-  background: var(--color-surface);
+  background: var(--surface);
+  transition: border-color 0.12s ease;
 }
 
 .list-item:hover {
-  border-color: #c7d2fe;
+  border-color: var(--brand-2);
 }
 
-.two-col {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
-  align-items: start;
-}
-
+/* ---------- Chat ---------- */
 .chat-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 20px;
-  height: calc(100vh - 130px);
+  height: calc(100vh - 140px);
 }
 
 .conversation-list {
@@ -324,30 +463,30 @@ select {
 
 .chat-bubble {
   max-width: 80%;
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 11px 15px;
+  border-radius: var(--radius);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
 }
 
 .chat-bubble.user {
   align-self: flex-end;
-  background: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
   border-bottom-right-radius: 4px;
 }
 
 .chat-bubble.assistant {
   align-self: flex-start;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
 }
 
 .chat-sources {
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: var(--text-faint);
   margin-top: 6px;
 }
 
@@ -360,33 +499,79 @@ select {
 .chat-input-row textarea {
   flex: 1;
   resize: none;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+  background: var(--bg-elevated);
 }
 
+/* ---------- Agent ---------- */
 .tool-call-log {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
-  background: #fafafa;
+  background: var(--surface-sunken);
 }
 
 .tool-call-log .tool-name {
   font-weight: 700;
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  background: var(--gradient-brand-soft);
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
 .spinner-text {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+/* ---------- Theme / locale toggles ---------- */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.segmented button {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button.active {
+  background: var(--gradient-brand);
+  color: white;
+}
+
+.segmented button:hover:not(.active) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* ---------- Scrollbars (webkit) ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }

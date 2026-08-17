@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as api from "../api/endpoints";
+import { useI18n } from "../context/I18nContext";
 import { useWorkspace } from "../context/WorkspaceContext";
 import type { ConversationDetailResponse, ConversationResponse, MessageResponse, SourceItem } from "../api/types";
 
 export function ChatPage() {
   const { activeWorkspace } = useWorkspace();
+  const { t } = useI18n();
   const [conversations, setConversations] = useState<ConversationResponse[]>([]);
   const [activeConversation, setActiveConversation] = useState<ConversationDetailResponse | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -51,7 +53,6 @@ export function ChatPage() {
     setIsSending(true);
     setError(null);
 
-    // Optimistically show the user's message immediately.
     const optimisticUser: MessageResponse = {
       id: -Date.now(),
       role: "user",
@@ -81,8 +82,8 @@ export function ChatPage() {
   if (!activeWorkspace) {
     return (
       <div>
-        <h1 className="page-title">Chat</h1>
-        <div className="empty-state">Create or select a workspace first.</div>
+        <h1 className="page-title">{t("chat.title")}</h1>
+        <div className="empty-state">{t("chat.emptyNoWorkspace")}</div>
       </div>
     );
   }
@@ -91,11 +92,13 @@ export function ChatPage() {
     <div>
       <div className="top-bar">
         <div>
-          <h1 className="page-title">Chat</h1>
-          <p className="page-subtitle">Ask questions about the documents in {activeWorkspace.name}.</p>
+          <h1 className="page-title">{t("chat.title")}</h1>
+          <p className="page-subtitle">
+            {t("chat.subtitle")} {activeWorkspace.name}.
+          </p>
         </div>
         <button className="btn" onClick={startNewConversation}>
-          + New conversation
+          + {t("chat.newConversation")}
         </button>
       </div>
 
@@ -103,38 +106,36 @@ export function ChatPage() {
 
       <div className="chat-layout">
         <div className="card conversation-list">
-          {conversations.length === 0 && <div className="empty-state">No conversations yet.</div>}
+          {conversations.length === 0 && <div className="empty-state">{t("chat.emptyList")}</div>}
           {conversations.map((c) => (
             <div
               key={c.id}
               className="list-item"
               style={{
                 cursor: "pointer",
-                borderColor: activeConversation?.id === c.id ? "var(--color-primary)" : undefined,
+                borderColor: activeConversation?.id === c.id ? "var(--brand-2)" : undefined,
               }}
               onClick={() => openConversation(c.id)}
             >
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{c.title}</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{c.title}</div>
             </div>
           ))}
         </div>
 
         <div className="card chat-thread">
-          {!activeConversation && (
-            <div className="empty-state">Select a conversation, or start a new one.</div>
-          )}
+          {!activeConversation && <div className="empty-state">{t("chat.emptyThread")}</div>}
           {activeConversation && (
             <>
               <div className="chat-messages">
                 {activeConversation.messages.length === 0 && (
-                  <div className="empty-state">Ask your first question below.</div>
+                  <div className="empty-state">{t("chat.emptyMessages")}</div>
                 )}
                 {activeConversation.messages.map((message) => (
                   <div key={message.id}>
                     <div className={`chat-bubble ${message.role}`}>{message.content}</div>
                     {message.role === "assistant" && lastSources[message.id]?.length ? (
                       <div className="chat-sources">
-                        Sources:{" "}
+                        {t("chat.sources")}:{" "}
                         {lastSources[message.id]
                           .map((s) => `${s.filename} (chunk ${s.chunk_index}, ${s.similarity_score.toFixed(2)})`)
                           .join(", ")}
@@ -148,7 +149,7 @@ export function ChatPage() {
               <form className="chat-input-row" onSubmit={handleSend}>
                 <textarea
                   rows={2}
-                  placeholder="Ask a question about this workspace's documents…"
+                  placeholder={t("chat.placeholder")}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
@@ -159,7 +160,7 @@ export function ChatPage() {
                   }}
                 />
                 <button className="btn" type="submit" disabled={isSending || !draft.trim()}>
-                  {isSending ? "Thinking…" : "Send"}
+                  {isSending ? t("chat.thinking") : t("chat.send")}
                 </button>
               </form>
             </>

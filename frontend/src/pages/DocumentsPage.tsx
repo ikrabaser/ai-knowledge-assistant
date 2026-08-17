@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as api from "../api/endpoints";
 import { DocumentStatusBadge } from "../components/DocumentStatusBadge";
+import { useI18n } from "../context/I18nContext";
 import { useWorkspace } from "../context/WorkspaceContext";
 import type { DocumentResponse } from "../api/types";
 
 const ACCEPTED_TYPES = ".pdf,.docx,.txt";
+const POLL_INTERVAL_MS = 3000;
 
 export function DocumentsPage() {
   const { activeWorkspace } = useWorkspace();
+  const { t, locale } = useI18n();
   const [documents, setDocuments] = useState<DocumentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -16,20 +19,26 @@ export function DocumentsPage() {
 
   const loadDocuments = useCallback(async () => {
     if (!activeWorkspace) return;
-    setIsLoading(true);
     try {
       const list = await api.listDocuments(activeWorkspace.id);
       setDocuments(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load documents.");
-    } finally {
-      setIsLoading(false);
     }
   }, [activeWorkspace]);
 
   useEffect(() => {
-    loadDocuments();
+    setIsLoading(true);
+    loadDocuments().finally(() => setIsLoading(false));
   }, [loadDocuments]);
+
+  // Indexing runs asynchronously (Celery) — poll while anything is still in flight.
+  useEffect(() => {
+    const hasPending = documents.some((d) => d.status === "uploaded" || d.status === "processing");
+    if (!hasPending) return;
+    const interval = setInterval(loadDocuments, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [documents, loadDocuments]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -50,8 +59,8 @@ export function DocumentsPage() {
   if (!activeWorkspace) {
     return (
       <div>
-        <h1 className="page-title">Documents</h1>
-        <div className="empty-state">Create or select a workspace first.</div>
+        <h1 className="page-title">{t("documents.title")}</h1>
+        <div className="empty-state">{t("documents.emptyNoWorkspace")}</div>
       </div>
     );
   }
@@ -60,9 +69,9 @@ export function DocumentsPage() {
     <div>
       <div className="top-bar">
         <div>
-          <h1 className="page-title">Documents</h1>
+          <h1 className="page-title">{t("documents.title")}</h1>
           <p className="page-subtitle">
-            In workspace <strong>{activeWorkspace.name}</strong> — PDF, DOCX, or TXT.
+            {t("documents.subtitleIn")} <strong>{activeWorkspace.name}</strong> — {t("documents.types")}
           </p>
         </div>
         <div>
@@ -74,7 +83,7 @@ export function DocumentsPage() {
             onChange={handleFileChange}
           />
           <button className="btn" disabled={isUploading} onClick={() => fileInputRef.current?.click()}>
-            {isUploading ? "Uploading…" : "Upload document"}
+            {isUploading ? t("documents.uploading") : t("documents.upload")}
           </button>
         </div>
       </div>
@@ -82,17 +91,15 @@ export function DocumentsPage() {
       {error && <div className="error-banner">{error}</div>}
 
       <div className="card">
-        {isLoading && <div className="spinner-text">Loading documents…</div>}
-        {!isLoading && documents.length === 0 && (
-          <div className="empty-state">No documents yet — upload one to get started.</div>
-        )}
+        {isLoading && <div className="spinner-text">{t("common.loading")}</div>}
+        {!isLoading && documents.length === 0 && <div className="empty-state">{t("documents.empty")}</div>}
         {documents.map((doc) => (
           <div key={doc.id} className="list-item">
             <div>
-              <div style={{ fontWeight: 600 }}>{doc.filename}</div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                {doc.content_type} · Uploaded {new Date(doc.created_at).toLocaleString()}
-                {doc.error_message && <span style={{ color: "var(--color-danger)" }}> · {doc.error_message}</span>}
+              <div style={{ fontWeight: 700 }}>{doc.filename}</div>
+              <div style={{ fontSize: 12, color: "var(--text-faint)" }}>
+                {doc.content_type} · {t("documents.uploaded")} {new Date(doc.created_at).toLocaleString(locale)}
+                {doc.error_message && <span style={{ color: "var(--danger)" }}> · {doc.error_message}</span>}
               </div>
             </div>
             <DocumentStatusBadge status={doc.status} />
