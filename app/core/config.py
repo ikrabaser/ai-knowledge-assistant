@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     conversation_history_max_messages: int = 10
     conversation_history_max_tokens: int = 2000
 
+    # Frontend origins allowed to call this API (comma-separated).
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:

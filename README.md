@@ -173,26 +173,70 @@ never committed.
 docker compose up --build
 ```
 
-This starts two services:
+This starts three services:
 
 - `postgres` — PostgreSQL with the `pgvector` extension (health-checked)
 - `api` — the FastAPI application, which waits for PostgreSQL to be healthy, runs Alembic
   migrations automatically, then starts Uvicorn
+- `frontend` — the React web app, built and served by nginx
 
-The API will be available at `http://localhost:8000`, with interactive docs at
-`http://localhost:8000/docs`.
+The API is available at `http://localhost:8000`, with interactive docs at
+`http://localhost:8000/docs`. The web app is available at `http://localhost:5173`.
+
+> This project has grown beyond the original single-user MVP described further below — it now
+> also has JWT authentication, per-user workspaces, persistent conversation history, a
+> configurable OpenAI/Anthropic provider, LLM function-calling tools, and this frontend. See
+> `/docs` (Swagger) for the full, current list of endpoints; the sections below are being
+> updated to match as that work lands.
+
+## Frontend
+
+A React + Vite + TypeScript single-page app in [`frontend/`](frontend), covering:
+
+- **Auth** — register / login (JWT stored client-side, attached to every API call)
+- **Workspaces** — create and switch between workspaces
+- **Documents** — upload PDF/DOCX/TXT, see indexing status
+- **Chat** — per-workspace conversations with persistent history and source citations
+- **Agent** — ask questions that may trigger LLM function-calling tools (list workspaces/
+  documents, summarize a document), with a log of exactly which tools ran and their result
+
+Run it standalone against a local API:
+
+```bash
+cd frontend
+cp .env.example .env   # VITE_API_BASE_URL, defaults to http://localhost:8000
+npm install
+npm run dev             # http://localhost:5173
+```
 
 ## API Endpoints
+
+The authoritative, up-to-date list is always at `/docs` (Swagger UI). As of this writing:
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/` | Basic application info |
 | `GET` | `/health` | Health check |
-| `POST` | `/api/v1/documents` | Upload a PDF/DOCX/TXT document and run the ingestion pipeline |
-| `GET` | `/api/v1/documents` | List all uploaded documents |
+| `POST` | `/api/v1/auth/register` | Create an account, returns an access token |
+| `POST` | `/api/v1/auth/login` | Log in, returns an access token |
+| `GET` | `/api/v1/auth/me` | Current authenticated user |
+| `POST` | `/api/v1/workspaces` | Create a workspace |
+| `GET` | `/api/v1/workspaces` | List your workspaces |
+| `GET` | `/api/v1/workspaces/{id}` | Fetch one of your workspaces |
+| `POST` | `/api/v1/documents` | Upload a PDF/DOCX/TXT document into a workspace |
+| `GET` | `/api/v1/documents` | List documents in a workspace |
 | `GET` | `/api/v1/documents/{id}` | Fetch a single document |
-| `POST` | `/api/v1/search` | Semantic search over indexed chunks |
-| `POST` | `/api/v1/ask` | Ask a question — full RAG pipeline |
+| `POST` | `/api/v1/search` | Semantic search within a workspace |
+| `POST` | `/api/v1/ask` | Ask a question — one-shot RAG, no history |
+| `POST` | `/api/v1/conversations` | Start a conversation in a workspace |
+| `GET` | `/api/v1/conversations` | List your conversations in a workspace |
+| `GET` | `/api/v1/conversations/{id}` | Fetch a conversation with its messages |
+| `POST` | `/api/v1/conversations/{id}/messages` | Ask within a conversation (RAG + history) |
+| `POST` | `/api/v1/agent/ask` | Ask, letting the LLM call read-only tools if it needs to |
+
+All endpoints except `/`, `/health`, `/docs` and `/api/v1/auth/*` require a `Bearer` access
+token, and every workspace-scoped endpoint verifies you own that workspace before returning
+anything.
 
 ## Example Requests
 

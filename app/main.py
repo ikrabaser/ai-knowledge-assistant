@@ -1,5 +1,6 @@
 """FastAPI application entrypoint."""
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import agent, auth, conversations, documents, health, rag, search, workspaces
@@ -15,6 +16,14 @@ app = FastAPI(
     title=settings.app_name,
     description="Upload documents and ask questions about them using Retrieval-Augmented Generation.",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(health.router)
