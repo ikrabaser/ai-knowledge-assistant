@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useI18n } from "../context/I18nContext";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { PlusIcon } from "./icons";
 
 export function WorkspaceSwitcher() {
   const { workspaces, activeWorkspace, selectWorkspace, createWorkspace } = useWorkspace();
@@ -53,7 +54,7 @@ export function WorkspaceSwitcher() {
         </form>
       ) : (
         <button className="btn btn-secondary btn-sm" onClick={() => setIsCreating(true)}>
-          + {t("workspaces.addNew")}
+          <PlusIcon width={14} height={14} /> {t("workspaces.addNew")}
         </button>
       )}
       {error && <div style={{ color: "var(--danger)", fontSize: 12 }}>{error}</div>}

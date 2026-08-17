@@ -1,5 +1,6 @@
 import { useState } from "react";
 import * as api from "../api/endpoints";
+import { CheckIcon, SendIcon, SparkleIcon, XIcon } from "../components/icons";
 import { useI18n } from "../context/I18nContext";
 import type { AgentAskResponse } from "../api/types";
 
@@ -50,7 +51,13 @@ export function AgentPage() {
             onChange={(e) => setQuestion(e.target.value)}
           />
           <button className="btn" type="submit" disabled={isAsking || !question.trim()}>
-            {isAsking ? t("agent.thinking") : t("agent.ask")}
+            {isAsking ? (
+              t("agent.thinking")
+            ) : (
+              <>
+                <SendIcon width={15} height={15} /> {t("agent.ask")}
+              </>
+            )}
           </button>
         </form>
       </div>
@@ -62,13 +69,20 @@ export function AgentPage() {
         .reverse()
         .map((turn, i) => (
           <div key={i} className="card">
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>❓ {turn.question}</div>
+            <div className="agent-question">
+              <SparkleIcon width={15} height={15} />
+              {turn.question}
+            </div>
             <div style={{ marginBottom: turn.response.tool_calls.length ? 10 : 0 }}>{turn.response.answer}</div>
             {turn.response.tool_calls.map((call, j) => (
               <div key={j} className="tool-call-log">
                 <span className="tool-name">{call.name}</span>{" "}
-                <span style={{ color: call.success ? "var(--success)" : "var(--danger)" }}>
-                  {call.success ? `✓ ${t("agent.succeeded")}` : `✗ ${t("agent.failed")}`}
+                <span
+                  className="tool-call-status"
+                  style={{ color: call.success ? "var(--success)" : "var(--danger)" }}
+                >
+                  {call.success ? <CheckIcon width={12} height={12} /> : <XIcon width={12} height={12} />}
+                  {call.success ? t("agent.succeeded") : t("agent.failed")}
                 </span>
                 {call.error && <div style={{ marginTop: 4 }}>{call.error}</div>}
                 {call.result && (

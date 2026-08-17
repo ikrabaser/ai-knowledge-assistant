@@ -1,6 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import * as api from "../api/endpoints";
+import {
+  BellIcon,
+  ChatIcon,
+  CheckIcon,
+  ClockIcon,
+  FileIcon,
+  FolderIcon,
+  RocketIcon,
+  SearchIcon,
+  SendIcon,
+  SparkleIcon,
+  UploadIcon,
+  WarningIcon,
+} from "../components/icons";
 import { useI18n } from "../context/I18nContext";
 import { useAuth } from "../context/AuthContext";
 import { useWorkspace } from "../context/WorkspaceContext";
@@ -8,7 +22,7 @@ import type { AgentAskResponse, ConversationResponse, DocumentResponse } from ".
 
 interface ActivityItem {
   id: string;
-  icon: string;
+  icon: ReactNode;
   label: string;
   detail: string;
   at: string;
@@ -59,14 +73,21 @@ export function OverviewPage() {
   const activity: ActivityItem[] = [
     ...documents.map((d) => ({
       id: `doc-${d.id}`,
-      icon: d.status === "indexed" ? "✅" : d.status === "failed" ? "⚠️" : "📤",
+      icon:
+        d.status === "indexed" ? (
+          <CheckIcon width={14} height={14} className="activity-icon-success" />
+        ) : d.status === "failed" ? (
+          <WarningIcon width={14} height={14} className="activity-icon-danger" />
+        ) : (
+          <UploadIcon width={14} height={14} className="activity-icon-muted" />
+        ),
       label: d.filename,
       detail: locale === "tr" ? "Yüklendi" : "Uploaded",
       at: d.created_at,
     })),
     ...conversations.map((c) => ({
       id: `convo-${c.id}`,
-      icon: "💬",
+      icon: <ChatIcon width={14} height={14} className="activity-icon-brand" />,
       label: c.title,
       detail: locale === "tr" ? "Konuşma başlatıldı" : "Conversation started",
       at: c.created_at,
@@ -87,7 +108,10 @@ export function OverviewPage() {
     } catch {
       setThread((prev) => [
         ...prev,
-        { question, response: { answer: locale === "tr" ? "Bir şeyler ters gitti." : "Something went wrong.", tool_calls: [] } },
+        {
+          question,
+          response: { answer: locale === "tr" ? "Bir şeyler ters gitti." : "Something went wrong.", tool_calls: [] },
+        },
       ]);
     } finally {
       setAsking(false);
@@ -105,19 +129,24 @@ export function OverviewPage() {
       {/* Top bar: search + notifications + avatar (search/bell are decorative — no backend for global search/notifications yet) */}
       <div className="overview-topbar">
         <div className="overview-search">
-          <span>🔍</span>
-          <input placeholder={locale === "tr" ? "Doküman, sohbet ara veya bir şey sor…" : "Search documents, chats, or ask anything…"} />
+          <SearchIcon width={16} height={16} />
+          <input
+            placeholder={
+              locale === "tr" ? "Doküman, sohbet ara veya bir şey sor…" : "Search documents, chats, or ask anything…"
+            }
+          />
           <kbd>⌘K</kbd>
         </div>
         <div className="overview-topbar-right">
           <button className="icon-btn" aria-label="Notifications" title={locale === "tr" ? "Bildirimler" : "Notifications"}>
-            🔔<span className="icon-btn-badge">3</span>
+            <BellIcon width={16} height={16} />
+            <span className="icon-btn-badge">3</span>
           </button>
           <div className="avatar-chip">{initial}</div>
         </div>
       </div>
 
-      <h1 className="page-title">{t("nav.overview") ?? "Overview"}</h1>
+      <h1 className="page-title">{t("nav.overview")}</h1>
       <p className="page-subtitle">
         {locale === "tr" ? "Tekrar hoş geldin" : "Welcome back"}, {user?.email?.split("@")[0]}!{" "}
         {locale === "tr" ? "İşte" : "Here's what's happening in"} {activeWorkspace?.name ?? "—"}
@@ -142,16 +171,20 @@ export function OverviewPage() {
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={locale === "tr" ? 'örn. "1 numaralı alandaki 4 numaralı dokümanı özetle"' : 'e.g. "Summarize document 4 in workspace 1"'}
+              placeholder={
+                locale === "tr"
+                  ? 'örn. "1 numaralı alandaki 4 numaralı dokümanı özetle"'
+                  : 'e.g. "Summarize document 4 in workspace 1"'
+              }
             />
             <button className="btn" type="submit" disabled={asking || !prompt.trim()}>
-              ➤
+              <SendIcon width={16} height={16} />
             </button>
           </form>
           <div className="hero-card-suggestions">
             {suggestions.map((s) => (
               <button key={s} type="button" onClick={() => setPrompt(s)}>
-                ✨ {s}
+                <SparkleIcon width={12} height={12} /> {s}
               </button>
             ))}
           </div>
@@ -169,15 +202,21 @@ export function OverviewPage() {
           <div className="stat-row">
             <div>
               <div className="stat-number">{workspaces.length}</div>
-              <div className="stat-label">📚 {t("nav.workspaces")}</div>
+              <div className="stat-label">
+                <FolderIcon width={13} height={13} /> {t("nav.workspaces")}
+              </div>
               <div className="stat-number" style={{ marginTop: 14 }}>
                 {documents.length}
               </div>
-              <div className="stat-label">📄 {t("nav.documents")}</div>
+              <div className="stat-label">
+                <FileIcon width={13} height={13} /> {t("nav.documents")}
+              </div>
               <div className="stat-number" style={{ marginTop: 14 }}>
                 {conversations.length}
               </div>
-              <div className="stat-label">💬 {locale === "tr" ? "Konuşmalar" : "Conversations"}</div>
+              <div className="stat-label">
+                <ChatIcon width={13} height={13} /> {locale === "tr" ? "Konuşmalar" : "Conversations"}
+              </div>
             </div>
             <div className="progress-ring-wrap">
               <svg viewBox="0 0 120 120" className="progress-ring">
@@ -209,7 +248,9 @@ export function OverviewPage() {
           {!isLoading && recentDocuments.length === 0 && <div className="empty-state">{t("documents.empty")}</div>}
           {recentDocuments.map((d) => (
             <div key={d.id} className="mini-row">
-              <span className={`file-chip file-chip-${d.content_type.includes("pdf") ? "pdf" : d.content_type.includes("word") ? "docx" : "txt"}`}>
+              <span
+                className={`file-chip file-chip-${d.content_type.includes("pdf") ? "pdf" : d.content_type.includes("word") ? "docx" : "txt"}`}
+              >
                 {d.content_type.includes("pdf") ? "PDF" : d.content_type.includes("word") ? "DOCX" : "TXT"}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -224,28 +265,36 @@ export function OverviewPage() {
           <span className="card-eyebrow">{locale === "tr" ? "Hızlı İşlemler" : "Quick Actions"}</span>
           <div className="quick-actions">
             <button onClick={() => navigate("/documents")}>
-              <span className="quick-action-icon">⬆️</span>
+              <span className="quick-action-icon">
+                <UploadIcon width={18} height={18} />
+              </span>
               <span>
                 <strong>{locale === "tr" ? "Doküman Yükle" : "Upload Document"}</strong>
                 <small>{locale === "tr" ? "Dosya ekle" : "Add files to your workspace"}</small>
               </span>
             </button>
             <button onClick={() => navigate("/workspaces")}>
-              <span className="quick-action-icon">🗂️</span>
+              <span className="quick-action-icon">
+                <FolderIcon width={18} height={18} />
+              </span>
               <span>
                 <strong>{locale === "tr" ? "Çalışma Alanı Oluştur" : "Create Workspace"}</strong>
                 <small>{locale === "tr" ? "Bilginizi düzenleyin" : "Organize your knowledge"}</small>
               </span>
             </button>
             <button onClick={() => navigate("/chat")}>
-              <span className="quick-action-icon">💬</span>
+              <span className="quick-action-icon">
+                <ChatIcon width={18} height={18} />
+              </span>
               <span>
                 <strong>{locale === "tr" ? "Yeni Sohbet" : "New Chat"}</strong>
                 <small>{locale === "tr" ? "Bir konuşma başlat" : "Start a conversation"}</small>
               </span>
             </button>
             <button onClick={() => navigate("/agent")}>
-              <span className="quick-action-icon">✨</span>
+              <span className="quick-action-icon">
+                <RocketIcon width={18} height={18} />
+              </span>
               <span>
                 <strong>{locale === "tr" ? "Ajanı Çalıştır" : "Run Agent"}</strong>
                 <small>{locale === "tr" ? "Görevleri otomatikleştir" : "Automate knowledge tasks"}</small>
@@ -256,25 +305,33 @@ export function OverviewPage() {
 
         <div className="card">
           <span className="card-eyebrow">{locale === "tr" ? "Etkinlik" : "Activity"}</span>
-          {activity.length === 0 && <div className="empty-state">{locale === "tr" ? "Henüz etkinlik yok." : "No activity yet."}</div>}
-          {activity.map((item) => (
-            <div key={item.id} className="mini-row">
-              <span className="activity-icon">{item.icon}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="mini-row-title">{item.label}</div>
-                <div className="mini-row-sub">
-                  {item.detail} · {timeAgo(item.at, locale)}
+          {activity.length === 0 && (
+            <div className="empty-state">{locale === "tr" ? "Henüz etkinlik yok." : "No activity yet."}</div>
+          )}
+          {activity.length === 0 ? null : (
+            <>
+              {activity.map((item) => (
+                <div key={item.id} className="mini-row">
+                  <span className="activity-icon">{item.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="mini-row-title">{item.label}</div>
+                    <div className="mini-row-sub">
+                      {item.detail} · {timeAgo(item.at, locale)}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       </div>
 
       <div className="overview-grid overview-grid-bottom">
         <div className="card assistant-card">
           <div className="top-bar" style={{ marginBottom: 4 }}>
-            <span className="card-eyebrow">✨ {locale === "tr" ? "AI Asistan" : "AI Assistant"}</span>
+            <span className="card-eyebrow">
+              <SparkleIcon width={13} height={13} /> {locale === "tr" ? "AI Asistan" : "AI Assistant"}
+            </span>
             {thread.length > 0 && (
               <button className="btn-ghost btn-sm" onClick={() => setThread([])}>
                 {locale === "tr" ? "Sohbeti temizle" : "Clear chat"}
@@ -297,8 +354,11 @@ export function OverviewPage() {
                   {turn.response.tool_calls.map((call, j) => (
                     <div key={j} className="tool-call-log">
                       <span className="tool-name">{call.name}</span>{" "}
-                      <span style={{ color: call.success ? "var(--success)" : "var(--danger)" }}>
-                        {call.success ? "✓" : "✗"}
+                      <span
+                        className="tool-call-status"
+                        style={{ color: call.success ? "var(--success)" : "var(--danger)" }}
+                      >
+                        {call.success ? <CheckIcon width={12} height={12} /> : <WarningIcon width={12} height={12} />}
                       </span>
                     </div>
                   ))}
@@ -314,7 +374,7 @@ export function OverviewPage() {
               onChange={(e) => setPrompt(e.target.value)}
             />
             <button className="btn" type="submit" disabled={asking || !prompt.trim()}>
-              {asking ? "…" : "➤"}
+              {asking ? <ClockIcon width={15} height={15} /> : <SendIcon width={15} height={15} />}
             </button>
           </form>
           <p className="assistant-disclaimer">
@@ -346,6 +406,17 @@ export function OverviewPage() {
             <strong className="text-success">98.4%</strong>
           </div>
           <svg viewBox="0 0 260 70" className="sparkline">
+            <defs>
+              <linearGradient id="sparkline-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--brand-2)" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="var(--brand-2)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon
+              points="0,50 20,45 40,48 60,35 80,40 100,28 120,32 140,20 160,25 180,15 200,18 220,10 240,14 260,8 260,70 0,70"
+              fill="url(#sparkline-fill)"
+              stroke="none"
+            />
             <polyline
               points="0,50 20,45 40,48 60,35 80,40 100,28 120,32 140,20 160,25 180,15 200,18 220,10 240,14 260,8"
               fill="none"

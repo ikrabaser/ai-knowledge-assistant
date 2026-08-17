@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as api from "../api/endpoints";
+import { PlusIcon, SendIcon } from "../components/icons";
 import { useI18n } from "../context/I18nContext";
 import { useWorkspace } from "../context/WorkspaceContext";
 import type { ConversationDetailResponse, ConversationResponse, MessageResponse, SourceItem } from "../api/types";
@@ -98,7 +99,7 @@ export function ChatPage() {
           </p>
         </div>
         <button className="btn" onClick={startNewConversation}>
-          + {t("chat.newConversation")}
+          <PlusIcon width={16} height={16} /> {t("chat.newConversation")}
         </button>
       </div>
 
@@ -160,7 +161,11 @@ export function ChatPage() {
                   }}
                 />
                 <button className="btn" type="submit" disabled={isSending || !draft.trim()}>
-                  {isSending ? t("chat.thinking") : t("chat.send")}
+                  {isSending ? t("chat.thinking") : (
+                    <>
+                      <SendIcon width={15} height={15} /> {t("chat.send")}
+                    </>
+                  )}
                 </button>
               </form>
             </>

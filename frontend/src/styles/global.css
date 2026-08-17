@@ -226,6 +226,13 @@ select {
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.overview-grid .card:hover,
+.overview-grid-bottom .card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .card + .card {
@@ -542,6 +549,22 @@ select {
   background: var(--surface-sunken);
 }
 
+.agent-question {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--brand-2);
+}
+
+.tool-call-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+}
+
 .tool-call-log .tool-name {
   font-weight: 700;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -565,13 +588,17 @@ select {
 }
 
 .segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
-  padding: 6px 10px;
+  padding: 7px 10px;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .segmented button + button {
@@ -661,13 +688,22 @@ select {
 
 .icon-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--border-strong);
   background: var(--surface);
+  color: var(--text-muted);
   border-radius: var(--radius-sm);
   width: 36px;
   height: 36px;
   cursor: pointer;
-  font-size: 15px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .icon-btn-badge {
@@ -780,6 +816,9 @@ select {
 }
 
 .hero-card-suggestions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.06);
   color: #e4e0f5;
@@ -787,10 +826,12 @@ select {
   padding: 6px 13px;
   font-size: 12px;
   cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .hero-card-suggestions button:hover {
   background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
 }
 
 .overview-grid {
@@ -805,6 +846,9 @@ select {
 }
 
 .card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
@@ -828,6 +872,9 @@ select {
 }
 
 .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
@@ -930,8 +977,30 @@ select {
 }
 
 .activity-icon {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
   flex-shrink: 0;
+}
+
+.activity-icon-success {
+  color: var(--success);
+}
+
+.activity-icon-danger {
+  color: var(--danger);
+}
+
+.activity-icon-brand {
+  color: var(--brand-2);
+}
+
+.activity-icon-muted {
+  color: var(--text-faint);
 }
 
 .quick-actions {
@@ -951,11 +1020,13 @@ select {
   padding: 10px 12px;
   cursor: pointer;
   text-align: left;
+  transition: border-color 0.12s ease, background-color 0.12s ease, transform 0.1s ease;
 }
 
 .quick-actions button:hover {
   border-color: var(--brand-2);
   background: var(--surface-hover);
+  transform: translateX(2px);
 }
 
 .quick-actions button span:last-child {
@@ -973,7 +1044,15 @@ select {
 }
 
 .quick-action-icon {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-brand-soft);
+  color: var(--brand-2);
+  flex-shrink: 0;
 }
 
 .assistant-card {

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { ChatIcon, FileIcon, FolderIcon, HomeIcon, LogOutIcon, SparkleIcon } from "./icons";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { Logo } from "./Logo";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -21,19 +22,19 @@ export function Layout() {
 
         <nav className="sidebar-nav">
           <NavLink to="/overview" className={({ isActive }) => (isActive ? "active" : "")}>
-            🏠 {t("nav.overview")}
+            <HomeIcon /> {t("nav.overview")}
           </NavLink>
           <NavLink to="/workspaces" className={({ isActive }) => (isActive ? "active" : "")}>
-            🗂️ {t("nav.workspaces")}
+            <FolderIcon /> {t("nav.workspaces")}
           </NavLink>
           <NavLink to="/documents" className={({ isActive }) => (isActive ? "active" : "")}>
-            📄 {t("nav.documents")}
+            <FileIcon /> {t("nav.documents")}
           </NavLink>
           <NavLink to="/chat" className={({ isActive }) => (isActive ? "active" : "")}>
-            💬 {t("nav.chat")}
+            <ChatIcon /> {t("nav.chat")}
           </NavLink>
           <NavLink to="/agent" className={({ isActive }) => (isActive ? "active" : "")}>
-            ✨ {t("nav.agent")}
+            <SparkleIcon /> {t("nav.agent")}
           </NavLink>
         </nav>
 
@@ -44,7 +45,7 @@ export function Layout() {
           </div>
           <div className="sidebar-user-email">{user?.email}</div>
           <button className="btn btn-secondary btn-sm" onClick={logout}>
-            {t("nav.logout")}
+            <LogOutIcon width={15} height={15} /> {t("nav.logout")}
           </button>
         </div>
       </aside>
