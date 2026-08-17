@@ -14,7 +14,8 @@ from app.core.security import decode_access_token
 from app.models.user import User
 from app.providers.base_chat_provider import ChatProvider
 from app.providers.base_embedding_provider import EmbeddingProvider
-from app.providers.openai_provider import OpenAIChatProvider, OpenAIEmbeddingProvider
+from app.providers.chat_provider_factory import create_chat_provider
+from app.providers.openai_provider import OpenAIEmbeddingProvider
 from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.document_repository import DocumentRepository
@@ -47,11 +48,9 @@ def get_embedding_provider(
     return OpenAIEmbeddingProvider(client=client, model=settings.openai_embedding_model)
 
 
-def get_chat_provider(
-    settings: Settings = Depends(get_settings),
-    client: AsyncOpenAI = Depends(get_openai_client),
-) -> ChatProvider:
-    return OpenAIChatProvider(client=client, model=settings.openai_chat_model)
+def get_chat_provider(settings: Settings = Depends(get_settings)) -> ChatProvider:
+    """Return the configured ChatProvider — OpenAI or Anthropic, per LLM_PROVIDER."""
+    return create_chat_provider(settings)
 
 
 def get_user_repository(session: AsyncSession = Depends(get_db)) -> UserRepository:

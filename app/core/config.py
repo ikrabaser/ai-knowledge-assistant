@@ -17,10 +17,18 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_knowledge_assistant"
 
+    # LLM provider selection — "openai" or "anthropic". Embeddings always use OpenAI
+    # (Anthropic has no public embeddings API), only chat/generation is switched.
+    llm_provider: str = "openai"
+
     # OpenAI
     openai_api_key: str = ""
     openai_chat_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
+
+    # Anthropic
+    anthropic_api_key: str = ""
+    anthropic_chat_model: str = "claude-3-5-sonnet-20241022"
 
     # Chunking
     chunk_size: int = 800
