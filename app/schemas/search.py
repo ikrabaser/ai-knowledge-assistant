@@ -5,8 +5,10 @@ from pydantic import BaseModel, Field
 class SearchRequest(BaseModel):
     """Request body for POST /api/v1/search."""
 
+    workspace_id: int
     query: str = Field(min_length=1, max_length=2000)
     limit: int = Field(default=5, ge=1, le=50)
+    document_id: int | None = None
 
 
 class SearchResultItem(BaseModel):

@@ -6,6 +6,8 @@ from app.services.rag_service import NO_CONTEXT_ANSWER, RagService
 from app.services.retrieval_service import RetrievalService
 from tests.fakes import FakeChatProvider, FakeChunkRepository, FakeChunkRow, FakeEmbeddingProvider
 
+WORKSPACE_ID = 1
+
 
 def _build_rag_service(rows: list[FakeChunkRow], answer: str = "The annual leave is 14 days.") -> tuple[RagService, FakeChatProvider]:
     retrieval_service = RetrievalService(
@@ -23,7 +25,7 @@ async def test_ask_returns_answer_with_sources_when_context_found() -> None:
     rows = [FakeChunkRow(1, "handbook.pdf", 4, "Annual leave policy is 14 days.", 0.91)]
     rag_service, chat_provider = _build_rag_service(rows)
 
-    response = await rag_service.ask("What is the annual leave policy?")
+    response = await rag_service.ask("What is the annual leave policy?", workspace_id=WORKSPACE_ID)
 
     assert response.answer == "The annual leave is 14 days."
     assert len(response.sources) == 1
@@ -37,7 +39,7 @@ async def test_ask_returns_answer_with_sources_when_context_found() -> None:
 async def test_ask_returns_fallback_answer_when_no_context() -> None:
     rag_service, chat_provider = _build_rag_service([])
 
-    response = await rag_service.ask("What is the meaning of life?")
+    response = await rag_service.ask("What is the meaning of life?", workspace_id=WORKSPACE_ID)
 
     assert response.answer == NO_CONTEXT_ANSWER
     assert response.sources == []

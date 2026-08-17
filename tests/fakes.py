@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from app.models.document import Document, DocumentStatus
 from app.models.user import User
+from app.models.workspace import Workspace
 from app.providers.base_chat_provider import ChatProvider
 from app.providers.base_embedding_provider import EmbeddingProvider
 
@@ -50,6 +51,7 @@ class FakeChunkRow:
     chunk_index: int
     content: str
     similarity_score: float
+    workspace_id: int = 1
 
 
 class FakeChunkRepository:
@@ -59,9 +61,20 @@ class FakeChunkRepository:
         self._rows = rows if rows is not None else []
 
     async def similarity_search(
-        self, query_embedding: list[float], limit: int, similarity_threshold: float
+        self,
+        query_embedding: list[float],
+        limit: int,
+        similarity_threshold: float,
+        workspace_id: int,
+        document_id: int | None = None,
     ):
-        matches = [row for row in self._rows if row.similarity_score >= similarity_threshold]
+        matches = [
+            row
+            for row in self._rows
+            if row.similarity_score >= similarity_threshold
+            and row.workspace_id == workspace_id
+            and (document_id is None or row.document_id == document_id)
+        ]
         matches.sort(key=lambda r: r.similarity_score, reverse=True)
 
         class _Chunk:
@@ -130,15 +143,21 @@ class FakeDocumentRepository:
         self._documents: dict[int, Document] = {}
         self._next_id = 1
 
-    async def create(self, filename: str, stored_filename: str, content_type: str) -> Document:
+    async def create(
+        self, filename: str, stored_filename: str, content_type: str, workspace_id: int
+    ) -> Document:
+        now = datetime.now(timezone.utc)
         document = Document(
             filename=filename,
             stored_filename=stored_filename,
             content_type=content_type,
             status=DocumentStatus.UPLOADED,
+            workspace_id=workspace_id,
         )
         document.id = self._next_id
         document.chunks = []
+        document.created_at = now
+        document.updated_at = now
         self._next_id += 1
         self._documents[document.id] = document
         return document
@@ -146,15 +165,49 @@ class FakeDocumentRepository:
     async def get_by_id(self, document_id: int) -> Document | None:
         return self._documents.get(document_id)
 
-    async def list_all(self) -> list[Document]:
-        return list(self._documents.values())
+    async def get_by_id_and_workspace(self, document_id: int, workspace_id: int) -> Document | None:
+        document = self._documents.get(document_id)
+        if document is not None and document.workspace_id == workspace_id:
+            return document
+        return None
+
+    async def list_by_workspace(self, workspace_id: int) -> list[Document]:
+        return [d for d in self._documents.values() if d.workspace_id == workspace_id]
 
     async def update_status(
         self, document: Document, status: DocumentStatus, error_message: str | None = None
     ) -> Document:
         document.status = status
         document.error_message = error_message
+        document.updated_at = datetime.now(timezone.utc)
         return document
+
+    async def commit(self) -> None:
+        pass
+
+
+class FakeWorkspaceRepository:
+    """In-memory stand-in for WorkspaceRepository, used to test WorkspaceService."""
+
+    def __init__(self) -> None:
+        self._workspaces: dict[int, Workspace] = {}
+        self._next_id = 1
+
+    async def create(self, name: str, owner_id: int) -> Workspace:
+        now = datetime.now(timezone.utc)
+        workspace = Workspace(name=name, owner_id=owner_id)
+        workspace.id = self._next_id
+        workspace.created_at = now
+        workspace.updated_at = now
+        self._next_id += 1
+        self._workspaces[workspace.id] = workspace
+        return workspace
+
+    async def get_by_id(self, workspace_id: int) -> Workspace | None:
+        return self._workspaces.get(workspace_id)
+
+    async def list_by_owner(self, owner_id: int) -> list[Workspace]:
+        return [w for w in self._workspaces.values() if w.owner_id == owner_id]
 
     async def commit(self) -> None:
         pass

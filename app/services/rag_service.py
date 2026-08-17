@@ -33,9 +33,9 @@ class RagService:
         )
         return f"Context:\n{context_blocks}\n\nQuestion: {question}\n\nAnswer:"
 
-    async def ask(self, question: str) -> AskResponse:
+    async def ask(self, question: str, workspace_id: int) -> AskResponse:
         question = question.strip()
-        chunks = await self._retrieval_service.search(question)
+        chunks = await self._retrieval_service.search(question, workspace_id=workspace_id)
 
         if not chunks:
             return AskResponse(answer=NO_CONTEXT_ANSWER, sources=[])

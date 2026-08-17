@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 class AskRequest(BaseModel):
     """Request body for POST /api/v1/ask."""
 
+    workspace_id: int
     question: str = Field(min_length=1, max_length=2000)
 
 

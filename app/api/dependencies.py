@@ -18,6 +18,7 @@ from app.providers.openai_provider import OpenAIChatProvider, OpenAIEmbeddingPro
 from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.workspace_repository import WorkspaceRepository
 from app.services.auth_service import AuthService
 from app.services.chunking_service import ChunkingService
 from app.services.document_service import DocumentService
@@ -25,6 +26,7 @@ from app.services.embedding_service import EmbeddingService
 from app.services.parsing_service import ParsingService
 from app.services.rag_service import RagService
 from app.services.retrieval_service import RetrievalService
+from app.services.workspace_service import WorkspaceService
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -79,6 +81,16 @@ async def get_current_user(
     if user is None or not user.is_active:
         raise InvalidCredentialsError("Invalid or expired authentication token.")
     return user
+
+
+def get_workspace_repository(session: AsyncSession = Depends(get_db)) -> WorkspaceRepository:
+    return WorkspaceRepository(session)
+
+
+def get_workspace_service(
+    workspace_repository: WorkspaceRepository = Depends(get_workspace_repository),
+) -> WorkspaceService:
+    return WorkspaceService(workspace_repository)
 
 
 def get_document_repository(session: AsyncSession = Depends(get_db)) -> DocumentRepository:

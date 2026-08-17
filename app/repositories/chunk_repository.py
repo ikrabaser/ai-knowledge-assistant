@@ -3,6 +3,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 
 
@@ -34,9 +35,19 @@ class ChunkRepository:
         return result.scalar_one()
 
     async def similarity_search(
-        self, query_embedding: list[float], limit: int, similarity_threshold: float
+        self,
+        query_embedding: list[float],
+        limit: int,
+        similarity_threshold: float,
+        workspace_id: int,
+        document_id: int | None = None,
     ) -> list[tuple[DocumentChunk, float]]:
         """Return (chunk, similarity_score) pairs ordered by cosine similarity, most similar first.
+
+        `workspace_id` is mandatory (not optional) so no call site can accidentally
+        run an unscoped search: a chunk belonging to another workspace must never be
+        returned, even if its similarity score would otherwise rank higher.
+        `document_id`, if given, further narrows the search to a single document.
 
         pgvector's `cosine_distance` returns a value in [0, 2] where 0 means identical.
         We convert it to a similarity score in [-1, 1] (1 == identical) for the API response.
@@ -44,11 +55,14 @@ class ChunkRepository:
         distance = DocumentChunk.embedding.cosine_distance(query_embedding)
         stmt = (
             select(DocumentChunk, distance.label("distance"))
+            .join(Document, Document.id == DocumentChunk.document_id)
             .options(joinedload(DocumentChunk.document))
-            .where(DocumentChunk.embedding.isnot(None))
+            .where(DocumentChunk.embedding.isnot(None), Document.workspace_id == workspace_id)
             .order_by(distance)
             .limit(limit)
         )
+        if document_id is not None:
+            stmt = stmt.where(DocumentChunk.document_id == document_id)
         result = await self._session.execute(stmt)
         rows = result.all()
 

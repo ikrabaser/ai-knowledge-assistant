@@ -31,7 +31,13 @@ class RetrievalService:
         self._default_top_k = default_top_k
         self._similarity_threshold = similarity_threshold
 
-    async def search(self, query: str, limit: int | None = None) -> list[RetrievedChunk]:
+    async def search(
+        self,
+        query: str,
+        workspace_id: int,
+        limit: int | None = None,
+        document_id: int | None = None,
+    ) -> list[RetrievedChunk]:
         query = query.strip()
         if not query:
             return []
@@ -41,6 +47,8 @@ class RetrievalService:
             query_embedding=query_embedding,
             limit=limit or self._default_top_k,
             similarity_threshold=self._similarity_threshold,
+            workspace_id=workspace_id,
+            document_id=document_id,
         )
 
         return [

@@ -11,12 +11,15 @@ class DocumentRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def create(self, filename: str, stored_filename: str, content_type: str) -> Document:
+    async def create(
+        self, filename: str, stored_filename: str, content_type: str, workspace_id: int
+    ) -> Document:
         document = Document(
             filename=filename,
             stored_filename=stored_filename,
             content_type=content_type,
             status=DocumentStatus.UPLOADED,
+            workspace_id=workspace_id,
         )
         self._session.add(document)
         await self._session.flush()
@@ -26,8 +29,18 @@ class DocumentRepository:
         result = await self._session.execute(select(Document).where(Document.id == document_id))
         return result.scalar_one_or_none()
 
-    async def list_all(self) -> list[Document]:
-        result = await self._session.execute(select(Document).order_by(Document.created_at.desc()))
+    async def get_by_id_and_workspace(self, document_id: int, workspace_id: int) -> Document | None:
+        result = await self._session.execute(
+            select(Document).where(Document.id == document_id, Document.workspace_id == workspace_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_by_workspace(self, workspace_id: int) -> list[Document]:
+        result = await self._session.execute(
+            select(Document)
+            .where(Document.workspace_id == workspace_id)
+            .order_by(Document.created_at.desc())
+        )
         return list(result.scalars().all())
 
     async def update_status(

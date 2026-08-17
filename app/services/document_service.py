@@ -68,13 +68,18 @@ class DocumentService:
         destination.write_bytes(content)
         return destination
 
-    async def upload_and_process(self, filename: str, content_type: str, content: bytes) -> Document:
+    async def upload_and_process(
+        self, filename: str, content_type: str, content: bytes, workspace_id: int
+    ) -> Document:
         """Run the full pipeline: validate -> store -> extract -> chunk -> embed -> persist."""
         self._validate(filename, content_type, content)
 
         stored_filename = self._generate_safe_filename(content_type)
         document = await self._documents.create(
-            filename=filename, stored_filename=stored_filename, content_type=content_type
+            filename=filename,
+            stored_filename=stored_filename,
+            content_type=content_type,
+            workspace_id=workspace_id,
         )
         await self._documents.commit()
 
@@ -119,14 +124,19 @@ class DocumentService:
         ]
         await self._chunks.bulk_create(chunk_rows)
 
-    async def get_document(self, document_id: int) -> Document:
-        document = await self._documents.get_by_id(document_id)
+    async def get_document(self, document_id: int, workspace_id: int) -> Document:
+        """Fetch a document, scoped to a workspace.
+
+        Returns 404 for both "does not exist" and "belongs to a different
+        workspace" — the caller can never distinguish the two.
+        """
+        document = await self._documents.get_by_id_and_workspace(document_id, workspace_id)
         if document is None:
             raise DocumentNotFoundError(f"Document {document_id} not found.")
         return document
 
-    async def list_documents(self) -> list[Document]:
-        return await self._documents.list_all()
+    async def list_documents(self, workspace_id: int) -> list[Document]:
+        return await self._documents.list_by_workspace(workspace_id)
 
     async def count_chunks(self, document_id: int) -> int:
         return await self._chunks.count_by_document_id(document_id)

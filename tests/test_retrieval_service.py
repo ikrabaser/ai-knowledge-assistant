@@ -5,13 +5,15 @@ from app.services.embedding_service import EmbeddingService
 from app.services.retrieval_service import RetrievalService
 from tests.fakes import FakeChunkRepository, FakeChunkRow, FakeEmbeddingProvider
 
+WORKSPACE_ID = 1
+
 
 @pytest.mark.asyncio
 async def test_search_returns_results_above_threshold() -> None:
     rows = [
-        FakeChunkRow(1, "handbook.pdf", 0, "Annual leave policy is 14 days.", 0.91),
-        FakeChunkRow(1, "handbook.pdf", 1, "Sick leave policy is 10 days.", 0.40),
-        FakeChunkRow(2, "other.pdf", 0, "Unrelated content.", 0.10),
+        FakeChunkRow(1, "handbook.pdf", 0, "Annual leave policy is 14 days.", 0.91, workspace_id=WORKSPACE_ID),
+        FakeChunkRow(1, "handbook.pdf", 1, "Sick leave policy is 10 days.", 0.40, workspace_id=WORKSPACE_ID),
+        FakeChunkRow(2, "other.pdf", 0, "Unrelated content.", 0.10, workspace_id=WORKSPACE_ID),
     ]
     retrieval_service = RetrievalService(
         chunk_repository=FakeChunkRepository(rows),
@@ -20,7 +22,7 @@ async def test_search_returns_results_above_threshold() -> None:
         similarity_threshold=0.3,
     )
 
-    results = await retrieval_service.search("annual leave policy")
+    results = await retrieval_service.search("annual leave policy", workspace_id=WORKSPACE_ID)
 
     assert len(results) == 2
     assert results[0].similarity_score >= results[1].similarity_score
@@ -35,14 +37,17 @@ async def test_search_returns_empty_list_for_blank_query() -> None:
         similarity_threshold=0.3,
     )
 
-    results = await retrieval_service.search("   ")
+    results = await retrieval_service.search("   ", workspace_id=WORKSPACE_ID)
 
     assert results == []
 
 
 @pytest.mark.asyncio
 async def test_search_respects_limit() -> None:
-    rows = [FakeChunkRow(1, "doc.pdf", i, f"chunk {i}", 0.9 - i * 0.01) for i in range(10)]
+    rows = [
+        FakeChunkRow(1, "doc.pdf", i, f"chunk {i}", 0.9 - i * 0.01, workspace_id=WORKSPACE_ID)
+        for i in range(10)
+    ]
     retrieval_service = RetrievalService(
         chunk_repository=FakeChunkRepository(rows),
         embedding_service=EmbeddingService(FakeEmbeddingProvider()),
@@ -50,6 +55,45 @@ async def test_search_respects_limit() -> None:
         similarity_threshold=0.0,
     )
 
-    results = await retrieval_service.search("query", limit=3)
+    results = await retrieval_service.search("query", workspace_id=WORKSPACE_ID, limit=3)
 
     assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_search_never_returns_chunks_from_another_workspace() -> None:
+    """Even a much higher similarity score in another workspace must never leak through."""
+    rows = [
+        FakeChunkRow(1, "mine.pdf", 0, "My own content.", 0.20, workspace_id=WORKSPACE_ID),
+        FakeChunkRow(2, "someone-elses.pdf", 0, "Someone else's content.", 0.99, workspace_id=999),
+    ]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+    )
+
+    results = await retrieval_service.search("anything", workspace_id=WORKSPACE_ID)
+
+    assert len(results) == 1
+    assert results[0].filename == "mine.pdf"
+
+
+@pytest.mark.asyncio
+async def test_search_can_be_scoped_to_a_single_document() -> None:
+    rows = [
+        FakeChunkRow(1, "a.pdf", 0, "Content A.", 0.80, workspace_id=WORKSPACE_ID),
+        FakeChunkRow(2, "b.pdf", 0, "Content B.", 0.90, workspace_id=WORKSPACE_ID),
+    ]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+    )
+
+    results = await retrieval_service.search("anything", workspace_id=WORKSPACE_ID, document_id=1)
+
+    assert len(results) == 1
+    assert results[0].filename == "a.pdf"
