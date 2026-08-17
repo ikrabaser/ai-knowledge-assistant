@@ -1,18 +1,19 @@
-"""Orchestrates the document ingestion pipeline: validate, store, parse, chunk, embed, persist."""
+"""Validates, safely stores and registers an uploaded document, then schedules indexing.
+
+The actual parse -> chunk -> embed pipeline does NOT run here — it's dispatched
+(see IndexingDispatcher) to run asynchronously, so the upload endpoint returns
+as soon as the file is safely on disk and the row exists, without blocking the
+caller on embedding generation.
+"""
 import uuid
 from pathlib import Path
 
 from app.core.exceptions import DocumentNotFoundError, FileTooLargeError, UnsupportedFileTypeError
-from app.core.logging import get_logger
-from app.models.document import Document, DocumentStatus
-from app.models.document_chunk import DocumentChunk
+from app.models.document import Document
 from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.document_repository import DocumentRepository
-from app.services.chunking_service import ChunkingService
-from app.services.embedding_service import EmbeddingService
-from app.services.parsing_service import SUPPORTED_CONTENT_TYPES, ParsingService
-
-logger = get_logger(__name__)
+from app.services.indexing_dispatcher import IndexingDispatcher
+from app.services.parsing_service import SUPPORTED_CONTENT_TYPES
 
 _EXTENSION_BY_CONTENT_TYPE = {
     "application/pdf": ".pdf",
@@ -22,23 +23,19 @@ _EXTENSION_BY_CONTENT_TYPE = {
 
 
 class DocumentService:
-    """Coordinates repositories and services to run the full ingestion pipeline."""
+    """Coordinates document upload/lookup and hands off indexing to the dispatcher."""
 
     def __init__(
         self,
         document_repository: DocumentRepository,
         chunk_repository: ChunkRepository,
-        parsing_service: ParsingService,
-        chunking_service: ChunkingService,
-        embedding_service: EmbeddingService,
+        indexing_dispatcher: IndexingDispatcher,
         upload_directory: str,
         max_upload_size_mb: int,
     ) -> None:
         self._documents = document_repository
         self._chunks = chunk_repository
-        self._parsing_service = parsing_service
-        self._chunking_service = chunking_service
-        self._embedding_service = embedding_service
+        self._indexing_dispatcher = indexing_dispatcher
         self._upload_directory = Path(upload_directory)
         self._max_upload_size_bytes = max_upload_size_mb * 1024 * 1024
 
@@ -71,10 +68,18 @@ class DocumentService:
     async def upload_and_process(
         self, filename: str, content_type: str, content: bytes, workspace_id: int
     ) -> Document:
-        """Run the full pipeline: validate -> store -> extract -> chunk -> embed -> persist."""
+        """Validate, store and register a document, then schedule indexing.
+
+        Returns immediately with the document in `uploaded` status — the caller
+        is never blocked on parsing/chunking/embedding. Use get_document() /
+        the document status endpoint to observe it move through
+        uploaded -> processing -> indexed | failed.
+        """
         self._validate(filename, content_type, content)
 
         stored_filename = self._generate_safe_filename(content_type)
+        self._save_file(stored_filename, content)
+
         document = await self._documents.create(
             filename=filename,
             stored_filename=stored_filename,
@@ -83,46 +88,9 @@ class DocumentService:
         )
         await self._documents.commit()
 
-        try:
-            self._save_file(stored_filename, content)
-            await self._index_document(document, content, content_type)
-            await self._documents.update_status(document, DocumentStatus.INDEXED)
-        except Exception as exc:
-            logger.exception("Failed to process document %s", document.id)
-            await self._documents.update_status(document, DocumentStatus.FAILED, error_message=str(exc))
-            await self._documents.commit()
-            raise
-        else:
-            await self._documents.commit()
+        await self._indexing_dispatcher.dispatch(document.id)
 
         return document
-
-    async def _index_document(self, document: Document, content: bytes, content_type: str) -> None:
-        await self._documents.update_status(document, DocumentStatus.PROCESSING)
-        await self._documents.commit()
-
-        text = self._parsing_service.extract_text(content, content_type)
-        text_chunks = self._chunking_service.split(text)
-
-        # Prevent duplicate chunks if this document is ever re-processed.
-        await self._chunks.delete_by_document_id(document.id)
-
-        if not text_chunks:
-            return
-
-        embeddings = await self._embedding_service.embed_documents([c.content for c in text_chunks])
-
-        chunk_rows = [
-            DocumentChunk(
-                document_id=document.id,
-                content=chunk.content,
-                chunk_index=chunk.chunk_index,
-                token_count=chunk.token_count,
-                embedding=embedding,
-            )
-            for chunk, embedding in zip(text_chunks, embeddings)
-        ]
-        await self._chunks.bulk_create(chunk_rows)
 
     async def get_document(self, document_id: int, workspace_id: int) -> Document:
         """Fetch a document, scoped to a workspace.

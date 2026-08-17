@@ -13,6 +13,8 @@ from app.models.user import User
 from app.models.workspace import Workspace
 from app.providers.base_chat_provider import ChatProvider, ToolCallDecision
 from app.providers.base_embedding_provider import EmbeddingProvider
+from app.services.document_indexing_service import DocumentIndexingService
+from app.services.indexing_dispatcher import IndexingDispatcher
 
 
 class FakeEmbeddingProvider(EmbeddingProvider):
@@ -198,6 +200,25 @@ class FakeDocumentRepository:
 
     async def commit(self) -> None:
         pass
+
+
+class FakeIndexingDispatcher(IndexingDispatcher):
+    """Test IndexingDispatcher: runs indexing inline (synchronously) via the given
+    DocumentIndexingService, instead of enqueueing a real Celery task.
+
+    Built against the *same* fake repositories as the DocumentService under test,
+    so by the time `dispatch()` returns, the document has already moved through
+    processing -> indexed|failed — preserving the old, deterministic, synchronous
+    test behavior without touching Celery or a real broker.
+    """
+
+    def __init__(self, indexing_service: DocumentIndexingService) -> None:
+        self._indexing_service = indexing_service
+        self.dispatched_ids: list[int] = []
+
+    async def dispatch(self, document_id: int) -> None:
+        self.dispatched_ids.append(document_id)
+        await self._indexing_service.index(document_id)
 
 
 class FakeWorkspaceRepository:

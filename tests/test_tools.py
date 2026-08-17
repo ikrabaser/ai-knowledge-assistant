@@ -22,16 +22,24 @@ async def _seed() -> tuple[WorkspaceService, DocumentService, int]:
 
     document_repository = FakeDocumentRepository()
     from app.services.chunking_service import ChunkingService
+    from app.services.document_indexing_service import DocumentIndexingService
     from app.services.embedding_service import EmbeddingService
     from app.services.parsing_service import ParsingService
-    from tests.fakes import FakeChunkRepository, FakeEmbeddingProvider
+    from tests.fakes import FakeChunkRepository, FakeEmbeddingProvider, FakeIndexingDispatcher
 
-    document_service = DocumentService(
+    chunk_repository = FakeChunkRepository()
+    indexing_service = DocumentIndexingService(
         document_repository=document_repository,
-        chunk_repository=FakeChunkRepository(),
+        chunk_repository=chunk_repository,
         parsing_service=ParsingService(),
         chunking_service=ChunkingService(chunk_size=50, chunk_overlap=10),
         embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        upload_directory="/tmp/tool-test-uploads",
+    )
+    document_service = DocumentService(
+        document_repository=document_repository,
+        chunk_repository=chunk_repository,
+        indexing_dispatcher=FakeIndexingDispatcher(indexing_service),
         upload_directory="/tmp/tool-test-uploads",
         max_upload_size_mb=1,
     )

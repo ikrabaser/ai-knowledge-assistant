@@ -21,6 +21,20 @@ class DocumentResponse(BaseModel):
 
 
 class DocumentUploadResponse(DocumentResponse):
-    """Response returned right after a document has been uploaded and processed."""
+    """Response returned right after a document has been uploaded.
+
+    Indexing runs asynchronously — chunk_count is 0 (and status "uploaded") until
+    the background worker finishes; poll GET /documents/{id}/status to observe it.
+    """
 
     chunk_count: int = 0
+
+
+class DocumentStatusResponse(BaseModel):
+    """Lightweight, poll-friendly view of a document's indexing progress."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: DocumentStatus
+    error_message: str | None = None

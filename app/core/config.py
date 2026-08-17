@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_knowledge_assistant"
 
+    # Redis — Celery broker/result backend for asynchronous document indexing
+    redis_url: str = "redis://localhost:6379/0"
+
     # LLM provider selection — "openai" or "anthropic". Embeddings always use OpenAI
     # (Anthropic has no public embeddings API), only chat/generation is switched.
     llm_provider: str = "openai"

@@ -1,24 +1,39 @@
-"""Tests for DocumentService: validation, storage safety and the ingestion pipeline."""
+"""Tests for DocumentService: validation, storage safety and dispatching indexing.
+
+Indexing itself now runs asynchronously (see DocumentIndexingService); these tests
+use FakeIndexingDispatcher, which runs the same pipeline inline against the same
+fake repositories, so assertions can still observe the final indexed/failed state
+synchronously without touching Celery or a real broker.
+"""
 import pytest
 
 from app.core.exceptions import DocumentNotFoundError, FileTooLargeError, UnsupportedFileTypeError
 from app.models.document import DocumentStatus
 from app.services.chunking_service import ChunkingService
+from app.services.document_indexing_service import DocumentIndexingService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
 from app.services.parsing_service import ParsingService
-from tests.fakes import FakeChunkRepository, FakeDocumentRepository, FakeEmbeddingProvider
+from tests.fakes import FakeChunkRepository, FakeDocumentRepository, FakeEmbeddingProvider, FakeIndexingDispatcher
 
 WORKSPACE_ID = 1
 
 
 def _build_service(tmp_path, max_upload_size_mb: int = 1) -> DocumentService:
-    return DocumentService(
-        document_repository=FakeDocumentRepository(),
-        chunk_repository=FakeChunkRepository(),
+    document_repository = FakeDocumentRepository()
+    chunk_repository = FakeChunkRepository()
+    indexing_service = DocumentIndexingService(
+        document_repository=document_repository,
+        chunk_repository=chunk_repository,
         parsing_service=ParsingService(),
         chunking_service=ChunkingService(chunk_size=50, chunk_overlap=10),
         embedding_service=EmbeddingService(FakeEmbeddingProvider(dimensions=8)),
+        upload_directory=str(tmp_path),
+    )
+    return DocumentService(
+        document_repository=document_repository,
+        chunk_repository=chunk_repository,
+        indexing_dispatcher=FakeIndexingDispatcher(indexing_service),
         upload_directory=str(tmp_path),
         max_upload_size_mb=max_upload_size_mb,
     )
@@ -68,6 +83,12 @@ async def test_upload_marks_document_as_failed_on_empty_text(tmp_path) -> None:
 
     with pytest.raises(Exception):
         await service.upload_and_process("empty.txt", "text/plain", b"   ", workspace_id=WORKSPACE_ID)
+
+    # The row was still created and its status/error_message reflect the failure —
+    # the document is discoverable as `failed`, not silently lost.
+    [document] = await service.list_documents(workspace_id=WORKSPACE_ID)
+    assert document.status == DocumentStatus.FAILED
+    assert document.error_message
 
 
 @pytest.mark.asyncio

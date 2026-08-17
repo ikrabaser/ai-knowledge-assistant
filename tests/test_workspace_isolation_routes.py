@@ -15,6 +15,7 @@ from app.api.dependencies import (
     get_auth_service,
     get_chunk_repository,
     get_document_repository,
+    get_document_service,
     get_embedding_service,
     get_user_repository,
     get_workspace_repository,
@@ -22,23 +23,44 @@ from app.api.dependencies import (
 from app.core.config import get_settings
 from app.main import app
 from app.services.auth_service import AuthService
+from app.services.chunking_service import ChunkingService
+from app.services.document_indexing_service import DocumentIndexingService
+from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
+from app.services.parsing_service import ParsingService
 from tests.fakes import (
     FakeChunkRepository,
     FakeDocumentRepository,
     FakeEmbeddingProvider,
+    FakeIndexingDispatcher,
     FakeUserRepository,
     FakeWorkspaceRepository,
 )
 
 
 @pytest.fixture
-def client():
+def client(tmp_path):
     users = FakeUserRepository()
     workspaces = FakeWorkspaceRepository()
     documents = FakeDocumentRepository()
     chunks = FakeChunkRepository()
     settings = get_settings()
+
+    indexing_service = DocumentIndexingService(
+        document_repository=documents,
+        chunk_repository=chunks,
+        parsing_service=ParsingService(),
+        chunking_service=ChunkingService(chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        upload_directory=str(tmp_path),
+    )
+    document_service = DocumentService(
+        document_repository=documents,
+        chunk_repository=chunks,
+        indexing_dispatcher=FakeIndexingDispatcher(indexing_service),
+        upload_directory=str(tmp_path),
+        max_upload_size_mb=settings.max_upload_size_mb,
+    )
 
     app.dependency_overrides[get_user_repository] = lambda: users
     app.dependency_overrides[get_auth_service] = lambda: AuthService(users, settings)
@@ -46,6 +68,7 @@ def client():
     app.dependency_overrides[get_document_repository] = lambda: documents
     app.dependency_overrides[get_chunk_repository] = lambda: chunks
     app.dependency_overrides[get_embedding_service] = lambda: EmbeddingService(FakeEmbeddingProvider())
+    app.dependency_overrides[get_document_service] = lambda: document_service
 
     with TestClient(app) as test_client:
         yield test_client
