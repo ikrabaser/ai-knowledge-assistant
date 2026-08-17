@@ -156,16 +156,15 @@ export function OverviewPage() {
       {/* Hero prompt */}
       <div className="hero-card">
         <div className="hero-card-glow" />
-        <img className="hero-card-art" src="/logo.png" alt="" />
         <div className="hero-card-content">
           <h2>
-            {locale === "tr" ? "Bilgi bankana " : "Ask your "}
-            <span className="text-gradient">{locale === "tr" ? "her şeyi sor" : "knowledge anything"}</span>
+            {locale === "tr" ? "Masteacon'a " : "Ask "}
+            <span className="text-gradient">{locale === "tr" ? "her şeyi sor" : "Masteacon anything"}</span>
           </h2>
           <p>
             {locale === "tr"
-              ? "AI asistanın tüm çalışma alanlarını ve dokümanlarını tarayarak anlamana, özetlemene ve aksiyon almana yardımcı olur."
-              : "Your AI assistant can search across your workspaces and documents to help you understand, summarize, and take action."}
+              ? "Masteacon, tüm çalışma alanlarını ve dokümanlarını tarayarak anlamana, özetlemene ve aksiyon almana yardımcı olur."
+              : "Masteacon can search across your workspaces and documents to help you understand, summarize, and take action."}
           </p>
           <form onSubmit={handleAsk} className="hero-card-form">
             <input

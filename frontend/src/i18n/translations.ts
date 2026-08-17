@@ -1,7 +1,7 @@
 export const translations = {
   en: {
-    "app.name": "AI Knowledge Assistant",
-    "app.tagline": "Your knowledge, powered by AI",
+    "app.name": "Masteacon AI",
+    "app.tagline": "Masteacon — Your beacon to mastery.",
 
     "nav.overview": "Overview",
     "nav.workspaces": "Workspaces",
@@ -19,7 +19,7 @@ export const translations = {
     "auth.noAccount": "No account yet?",
     "auth.createOne": "Create one",
     "auth.createTitle": "Create your account",
-    "auth.createSubtitle": "Start building your knowledge base",
+    "auth.createSubtitle": "Start your journey with Masteacon",
     "auth.passwordHint": "At least 8 characters.",
     "auth.createAccount": "Create account",
     "auth.creatingAccount": "Creating account…",
@@ -82,8 +82,8 @@ export const translations = {
     "common.loading": "Loading…",
   },
   tr: {
-    "app.name": "AI Bilgi Asistanı",
-    "app.tagline": "Bilgi birikiminiz, yapay zeka ile güçlendirilmiş",
+    "app.name": "Masteacon AI",
+    "app.tagline": "Masteacon — Your beacon to mastery.",
 
     "nav.overview": "Genel Bakış",
     "nav.workspaces": "Çalışma Alanları",
@@ -101,7 +101,7 @@ export const translations = {
     "auth.noAccount": "Hesabınız yok mu?",
     "auth.createOne": "Hemen oluşturun",
     "auth.createTitle": "Hesap oluşturun",
-    "auth.createSubtitle": "Bilgi bankanızı oluşturmaya başlayın",
+    "auth.createSubtitle": "Masteacon ile yolculuğunuza başlayın",
     "auth.passwordHint": "En az 8 karakter.",
     "auth.createAccount": "Hesap oluştur",
     "auth.creatingAccount": "Hesap oluşturuluyor…",

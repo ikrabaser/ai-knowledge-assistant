@@ -1,9 +1,12 @@
-# AI Knowledge Assistant
+# Masteacon — Your beacon to mastery.
 
-A Retrieval-Augmented Generation (RAG) service built with FastAPI, PostgreSQL and pgvector.
-Upload PDF, DOCX or TXT documents, and ask natural-language questions about their content —
-the assistant retrieves the most relevant passages via semantic vector search and answers
-using OpenAI, citing its sources.
+Masteacon is a Retrieval-Augmented Generation (RAG) knowledge assistant built with FastAPI,
+PostgreSQL and pgvector, with a React web app on top. Upload PDF, DOCX or TXT documents, and
+ask natural-language questions about their content — Masteacon retrieves the most relevant
+passages via semantic vector search and answers using OpenAI or Anthropic, citing its sources.
+
+> The underlying repository, package names and technical identifiers still use the project's
+> original working name (`ai-knowledge-assistant`) — only the product-facing name changed.
 
 ## Project Overview
 

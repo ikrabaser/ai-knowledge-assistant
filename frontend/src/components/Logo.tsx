@@ -28,7 +28,7 @@ export function Logo({ size = 28, withWordmark = false }: LogoProps) {
         />
         <circle cx="23.5" cy="9.5" r="1.6" fill="white" fillOpacity="0.9" />
       </svg>
-      {withWordmark && <span className="logo-wordmark">AI Knowledge Assistant</span>}
+      {withWordmark && <span className="logo-wordmark">Masteacon</span>}
     </span>
   );
 }

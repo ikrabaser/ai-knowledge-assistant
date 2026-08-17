@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
+import { Logo } from "../components/Logo";
 import { ThemeSwitcher } from "../components/ThemeSwitcher";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
@@ -36,8 +37,10 @@ export function RegisterPage() {
       </div>
 
       <div>
-        <div className="auth-hero">
-          <img src="/logo.png" alt={t("app.name")} />
+        <div className="auth-brand-header">
+          <Logo size={40} />
+          <div className="auth-brand-name">Masteacon</div>
+          <div className="auth-brand-tagline">{t("app.tagline")}</div>
         </div>
 
         <div className="card auth-card">

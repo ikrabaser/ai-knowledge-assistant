@@ -369,19 +369,29 @@ select {
   margin-bottom: 6px;
 }
 
-.auth-hero {
-  width: 320px;
-  max-width: 100%;
-  margin: 0 auto 20px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
+.auth-brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
-.auth-hero img {
-  display: block;
-  width: 100%;
-  height: auto;
+.auth-brand-name {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.auth-brand-tagline {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .auth-subtitle {
@@ -754,17 +764,6 @@ select {
     radial-gradient(600px 300px at 15% 20%, rgba(99, 102, 241, 0.35), transparent 60%),
     radial-gradient(500px 300px at 85% 80%, rgba(236, 72, 153, 0.3), transparent 60%);
   pointer-events: none;
-}
-
-.hero-card-art {
-  position: absolute;
-  right: -60px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 320px;
-  opacity: 0.85;
-  pointer-events: none;
-  mix-blend-mode: screen;
 }
 
 .hero-card-content {
@@ -1144,8 +1143,5 @@ select {
   }
   .overview-grid-bottom {
     grid-template-columns: 1fr;
-  }
-  .hero-card-art {
-    display: none;
   }
 }
