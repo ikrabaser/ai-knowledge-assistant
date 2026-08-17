@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.routes import auth, conversations, documents, health, rag, search, workspaces
+from app.api.routes import agent, auth, conversations, documents, health, rag, search, workspaces
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging, get_logger
@@ -24,6 +24,7 @@ app.include_router(documents.router)
 app.include_router(search.router)
 app.include_router(rag.router)
 app.include_router(conversations.router)
+app.include_router(agent.router)
 
 
 @app.exception_handler(AppError)

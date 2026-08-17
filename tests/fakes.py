@@ -11,7 +11,7 @@ from app.models.document import Document, DocumentStatus
 from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.models.workspace import Workspace
-from app.providers.base_chat_provider import ChatProvider
+from app.providers.base_chat_provider import ChatProvider, ToolCallDecision
 from app.providers.base_embedding_provider import EmbeddingProvider
 
 
@@ -35,15 +35,27 @@ class FakeEmbeddingProvider(EmbeddingProvider):
 class FakeChatProvider(ChatProvider):
     """Chat provider that echoes back a canned answer for assertions."""
 
-    def __init__(self, answer: str = "This is a fake answer based on the given context.") -> None:
+    def __init__(
+        self,
+        answer: str = "This is a fake answer based on the given context.",
+        tool_decision: ToolCallDecision | None = None,
+    ) -> None:
         self.answer = answer
         self.last_system_prompt: str | None = None
         self.last_user_prompt: str | None = None
+        self._tool_decision = tool_decision
 
     async def complete(self, system_prompt: str, user_prompt: str) -> str:
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
         return self.answer
+
+    async def decide_tool_calls(self, system_prompt, user_prompt, tools) -> ToolCallDecision:
+        self.last_system_prompt = system_prompt
+        self.last_user_prompt = user_prompt
+        if self._tool_decision is not None:
+            return self._tool_decision
+        return ToolCallDecision(text=self.answer, tool_calls=[])
 
 
 @dataclass

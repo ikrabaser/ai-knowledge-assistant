@@ -27,10 +27,17 @@ from app.services.chunking_service import ChunkingService
 from app.services.conversation_service import ConversationService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
+from app.services.agent_service import AgentService
 from app.services.parsing_service import ParsingService
 from app.services.rag_service import RagService
 from app.services.retrieval_service import RetrievalService
+from app.services.tool_execution_service import ToolExecutionService
 from app.services.workspace_service import WorkspaceService
+from app.tools.get_document_tool import GetDocumentTool
+from app.tools.list_documents_tool import ListDocumentsTool
+from app.tools.list_workspaces_tool import ListWorkspacesTool
+from app.tools.registry import ToolRegistry
+from app.tools.summarize_document_tool import SummarizeDocumentTool
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -178,4 +185,38 @@ def get_conversation_service(
         rag_service=rag_service,
         history_max_messages=settings.conversation_history_max_messages,
         history_max_tokens=settings.conversation_history_max_tokens,
+    )
+
+
+def get_tool_registry(
+    document_service: DocumentService = Depends(get_document_service),
+    workspace_service: WorkspaceService = Depends(get_workspace_service),
+    chunk_repository: ChunkRepository = Depends(get_chunk_repository),
+    chat_provider: ChatProvider = Depends(get_chat_provider),
+) -> ToolRegistry:
+    return ToolRegistry(
+        [
+            ListWorkspacesTool(workspace_service),
+            ListDocumentsTool(document_service, workspace_service),
+            GetDocumentTool(document_service, workspace_service),
+            SummarizeDocumentTool(document_service, workspace_service, chunk_repository, chat_provider),
+        ]
+    )
+
+
+def get_tool_execution_service(
+    tool_registry: ToolRegistry = Depends(get_tool_registry),
+) -> ToolExecutionService:
+    return ToolExecutionService(tool_registry)
+
+
+def get_agent_service(
+    chat_provider: ChatProvider = Depends(get_chat_provider),
+    tool_registry: ToolRegistry = Depends(get_tool_registry),
+    tool_execution_service: ToolExecutionService = Depends(get_tool_execution_service),
+) -> AgentService:
+    return AgentService(
+        chat_provider=chat_provider,
+        tool_registry=tool_registry,
+        tool_execution_service=tool_execution_service,
     )

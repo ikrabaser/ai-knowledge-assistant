@@ -23,6 +23,15 @@ class ChunkRepository:
         await self._session.flush()
         return chunks
 
+    async def list_content_by_document_id(self, document_id: int) -> list[str]:
+        """Return chunk contents for a document, in original chunk order."""
+        result = await self._session.execute(
+            select(DocumentChunk.content)
+            .where(DocumentChunk.document_id == document_id)
+            .order_by(DocumentChunk.chunk_index)
+        )
+        return list(result.scalars().all())
+
     async def count_by_document_id(self, document_id: int) -> int:
         """Count chunks without touching the Document.chunks lazy relationship.
 

@@ -1,7 +1,9 @@
 """OpenAI implementations of the embedding and chat provider interfaces."""
+import json
+
 from openai import AsyncOpenAI
 
-from app.providers.base_chat_provider import ChatProvider
+from app.providers.base_chat_provider import ChatProvider, RequestedToolCall, ToolCallDecision, ToolSpec
 from app.providers.base_embedding_provider import EmbeddingProvider
 
 
@@ -38,3 +40,32 @@ class OpenAIChatProvider(ChatProvider):
             temperature=0.2,
         )
         return response.choices[0].message.content or ""
+
+    async def decide_tool_calls(
+        self, system_prompt: str, user_prompt: str, tools: list[ToolSpec]
+    ) -> ToolCallDecision:
+        openai_tools = [
+            {
+                "type": "function",
+                "function": {"name": t.name, "description": t.description, "parameters": t.parameters},
+            }
+            for t in tools
+        ]
+        response = await self._client.chat.completions.create(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            tools=openai_tools,
+            tool_choice="auto",
+            temperature=0.2,
+        )
+        message = response.choices[0].message
+        tool_calls = [
+            RequestedToolCall(
+                id=call.id, name=call.function.name, arguments=json.loads(call.function.arguments or "{}")
+            )
+            for call in (message.tool_calls or [])
+        ]
+        return ToolCallDecision(text=message.content, tool_calls=tool_calls)
