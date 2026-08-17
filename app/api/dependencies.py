@@ -15,6 +15,7 @@ from app.services.chunking_service import ChunkingService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
 from app.services.parsing_service import ParsingService
+from app.services.retrieval_service import RetrievalService
 
 
 @lru_cache
@@ -68,4 +69,17 @@ def get_document_service(
         embedding_service=embedding_service,
         upload_directory=settings.upload_directory,
         max_upload_size_mb=settings.max_upload_size_mb,
+    )
+
+
+def get_retrieval_service(
+    settings: Settings = Depends(get_settings),
+    chunk_repository: ChunkRepository = Depends(get_chunk_repository),
+    embedding_service: EmbeddingService = Depends(get_embedding_service),
+) -> RetrievalService:
+    return RetrievalService(
+        chunk_repository=chunk_repository,
+        embedding_service=embedding_service,
+        default_top_k=settings.search_top_k,
+        similarity_threshold=settings.similarity_threshold,
     )
