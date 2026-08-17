@@ -7,14 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
+from app.providers.base_chat_provider import ChatProvider
 from app.providers.base_embedding_provider import EmbeddingProvider
-from app.providers.openai_provider import OpenAIEmbeddingProvider
+from app.providers.openai_provider import OpenAIChatProvider, OpenAIEmbeddingProvider
 from app.repositories.chunk_repository import ChunkRepository
 from app.repositories.document_repository import DocumentRepository
 from app.services.chunking_service import ChunkingService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
 from app.services.parsing_service import ParsingService
+from app.services.rag_service import RagService
 from app.services.retrieval_service import RetrievalService
 
 
@@ -29,6 +31,13 @@ def get_embedding_provider(
     client: AsyncOpenAI = Depends(get_openai_client),
 ) -> EmbeddingProvider:
     return OpenAIEmbeddingProvider(client=client, model=settings.openai_embedding_model)
+
+
+def get_chat_provider(
+    settings: Settings = Depends(get_settings),
+    client: AsyncOpenAI = Depends(get_openai_client),
+) -> ChatProvider:
+    return OpenAIChatProvider(client=client, model=settings.openai_chat_model)
 
 
 def get_document_repository(session: AsyncSession = Depends(get_db)) -> DocumentRepository:
@@ -83,3 +92,10 @@ def get_retrieval_service(
         default_top_k=settings.search_top_k,
         similarity_threshold=settings.similarity_threshold,
     )
+
+
+def get_rag_service(
+    retrieval_service: RetrievalService = Depends(get_retrieval_service),
+    chat_provider: ChatProvider = Depends(get_chat_provider),
+) -> RagService:
+    return RagService(retrieval_service=retrieval_service, chat_provider=chat_provider)
