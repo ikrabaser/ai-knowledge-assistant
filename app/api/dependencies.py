@@ -16,11 +16,14 @@ from app.providers.base_chat_provider import ChatProvider
 from app.providers.base_embedding_provider import EmbeddingProvider
 from app.providers.openai_provider import OpenAIChatProvider, OpenAIEmbeddingProvider
 from app.repositories.chunk_repository import ChunkRepository
+from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.document_repository import DocumentRepository
+from app.repositories.message_repository import MessageRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.workspace_repository import WorkspaceRepository
 from app.services.auth_service import AuthService
 from app.services.chunking_service import ChunkingService
+from app.services.conversation_service import ConversationService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
 from app.services.parsing_service import ParsingService
@@ -152,3 +155,28 @@ def get_rag_service(
     chat_provider: ChatProvider = Depends(get_chat_provider),
 ) -> RagService:
     return RagService(retrieval_service=retrieval_service, chat_provider=chat_provider)
+
+
+def get_conversation_repository(session: AsyncSession = Depends(get_db)) -> ConversationRepository:
+    return ConversationRepository(session)
+
+
+def get_message_repository(session: AsyncSession = Depends(get_db)) -> MessageRepository:
+    return MessageRepository(session)
+
+
+def get_conversation_service(
+    settings: Settings = Depends(get_settings),
+    conversation_repository: ConversationRepository = Depends(get_conversation_repository),
+    message_repository: MessageRepository = Depends(get_message_repository),
+    workspace_service: WorkspaceService = Depends(get_workspace_service),
+    rag_service: RagService = Depends(get_rag_service),
+) -> ConversationService:
+    return ConversationService(
+        conversation_repository=conversation_repository,
+        message_repository=message_repository,
+        workspace_service=workspace_service,
+        rag_service=rag_service,
+        history_max_messages=settings.conversation_history_max_messages,
+        history_max_tokens=settings.conversation_history_max_tokens,
+    )

@@ -6,7 +6,9 @@ PostgreSQL/pgvector instance for unit tests.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from app.models.conversation import Conversation
 from app.models.document import Document, DocumentStatus
+from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.models.workspace import Workspace
 from app.providers.base_chat_provider import ChatProvider
@@ -208,6 +210,67 @@ class FakeWorkspaceRepository:
 
     async def list_by_owner(self, owner_id: int) -> list[Workspace]:
         return [w for w in self._workspaces.values() if w.owner_id == owner_id]
+
+    async def commit(self) -> None:
+        pass
+
+
+class FakeConversationRepository:
+    """In-memory stand-in for ConversationRepository, used to test ConversationService."""
+
+    def __init__(self) -> None:
+        self._conversations: dict[int, Conversation] = {}
+        self._next_id = 1
+
+    async def create(self, workspace_id: int, user_id: int, title: str) -> Conversation:
+        now = datetime.now(timezone.utc)
+        conversation = Conversation(workspace_id=workspace_id, user_id=user_id, title=title)
+        conversation.id = self._next_id
+        conversation.created_at = now
+        conversation.updated_at = now
+        self._next_id += 1
+        self._conversations[conversation.id] = conversation
+        return conversation
+
+    async def get_by_id_and_owner(self, conversation_id: int, user_id: int) -> Conversation | None:
+        conversation = self._conversations.get(conversation_id)
+        if conversation is not None and conversation.user_id == user_id:
+            return conversation
+        return None
+
+    async def list_by_workspace_and_owner(self, workspace_id: int, user_id: int) -> list[Conversation]:
+        return [
+            c
+            for c in self._conversations.values()
+            if c.workspace_id == workspace_id and c.user_id == user_id
+        ]
+
+    async def commit(self) -> None:
+        pass
+
+
+class FakeMessageRepository:
+    """In-memory stand-in for MessageRepository, used to test ConversationService."""
+
+    def __init__(self) -> None:
+        self._messages: dict[int, Message] = {}
+        self._next_id = 1
+
+    async def create(self, conversation_id: int, role: MessageRole, content: str) -> Message:
+        now = datetime.now(timezone.utc)
+        message = Message(conversation_id=conversation_id, role=role, content=content)
+        message.id = self._next_id
+        message.created_at = now
+        self._next_id += 1
+        self._messages[message.id] = message
+        return message
+
+    async def list_by_conversation(self, conversation_id: int) -> list[Message]:
+        return [m for m in self._messages.values() if m.conversation_id == conversation_id]
+
+    async def list_recent_by_conversation(self, conversation_id: int, limit: int) -> list[Message]:
+        matches = [m for m in self._messages.values() if m.conversation_id == conversation_id]
+        return matches[-limit:]
 
     async def commit(self) -> None:
         pass

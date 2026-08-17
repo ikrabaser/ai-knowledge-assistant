@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Conversation history — bounds how much prior chat context is fed back into
+    # the RAG prompt, so a long-running conversation can't grow the prompt without limit.
+    conversation_history_max_messages: int = 10
+    conversation_history_max_tokens: int = 2000
+
 
 @lru_cache
 def get_settings() -> Settings:
