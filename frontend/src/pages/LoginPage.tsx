@@ -20,7 +20,7 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate("/workspaces");
+      navigate("/overview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {

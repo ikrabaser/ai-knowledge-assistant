@@ -3,6 +3,7 @@ export const translations = {
     "app.name": "AI Knowledge Assistant",
     "app.tagline": "Your knowledge, powered by AI",
 
+    "nav.overview": "Overview",
     "nav.workspaces": "Workspaces",
     "nav.documents": "Documents",
     "nav.chat": "Chat",
@@ -84,6 +85,7 @@ export const translations = {
     "app.name": "AI Bilgi Asistanı",
     "app.tagline": "Bilgi birikiminiz, yapay zeka ile güçlendirilmiş",
 
+    "nav.overview": "Genel Bakış",
     "nav.workspaces": "Çalışma Alanları",
     "nav.documents": "Dokümanlar",
     "nav.chat": "Sohbet",

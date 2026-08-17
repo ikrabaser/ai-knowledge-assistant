@@ -20,7 +20,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
     try {
       await register(email, password);
-      navigate("/workspaces");
+      navigate("/overview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {

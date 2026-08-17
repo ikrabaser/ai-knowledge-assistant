@@ -20,6 +20,9 @@ export function Layout() {
         <WorkspaceSwitcher />
 
         <nav className="sidebar-nav">
+          <NavLink to="/overview" className={({ isActive }) => (isActive ? "active" : "")}>
+            🏠 {t("nav.overview")}
+          </NavLink>
           <NavLink to="/workspaces" className={({ isActive }) => (isActive ? "active" : "")}>
             🗂️ {t("nav.workspaces")}
           </NavLink>
