@@ -1,5 +1,5 @@
 """Data-access layer for the DocumentChunk model, including pgvector similarity search."""
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -21,6 +21,17 @@ class ChunkRepository:
         self._session.add_all(chunks)
         await self._session.flush()
         return chunks
+
+    async def count_by_document_id(self, document_id: int) -> int:
+        """Count chunks without touching the Document.chunks lazy relationship.
+
+        Avoids triggering an implicit, unawaited lazy load on an async session
+        (which raises MissingGreenlet) when callers only need the count.
+        """
+        result = await self._session.execute(
+            select(func.count()).select_from(DocumentChunk).where(DocumentChunk.document_id == document_id)
+        )
+        return result.scalar_one()
 
     async def similarity_search(
         self, query_embedding: list[float], limit: int, similarity_threshold: float

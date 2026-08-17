@@ -36,6 +36,11 @@ class DocumentRepository:
         document.status = status
         document.error_message = error_message
         await self._session.flush()
+        # `updated_at` has a server-side `onupdate=func.now()`; after an UPDATE,
+        # SQLAlchemy marks it expired since it doesn't know the server-computed
+        # value. Refresh explicitly (async-safe) so later attribute access never
+        # triggers an implicit, unawaited lazy load ("MissingGreenlet").
+        await self._session.refresh(document)
         return document
 
     async def commit(self) -> None:

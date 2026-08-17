@@ -127,3 +127,6 @@ class DocumentService:
 
     async def list_documents(self) -> list[Document]:
         return await self._documents.list_all()
+
+    async def count_chunks(self, document_id: int) -> int:
+        return await self._chunks.count_by_document_id(document_id)

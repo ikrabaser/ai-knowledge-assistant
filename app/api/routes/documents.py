@@ -28,7 +28,7 @@ async def upload_document(
         error_message=document.error_message,
         created_at=document.created_at,
         updated_at=document.updated_at,
-        chunk_count=len(document.chunks),
+        chunk_count=await document_service.count_chunks(document.id),
     )
 
 

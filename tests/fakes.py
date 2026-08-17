@@ -83,6 +83,10 @@ class FakeChunkRepository:
         self.created_chunks = chunks
         return chunks
 
+    async def count_by_document_id(self, document_id: int) -> int:
+        created = getattr(self, "created_chunks", [])
+        return len([c for c in created if getattr(c, "document_id", None) == document_id])
+
     async def commit(self) -> None:
         pass
 

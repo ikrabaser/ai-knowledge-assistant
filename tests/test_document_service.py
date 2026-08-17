@@ -35,6 +35,7 @@ async def test_upload_and_process_indexes_a_valid_txt_document(tmp_path) -> None
     assert len(stored_files) == 1
     # The stored filename must never be derived from user input.
     assert stored_files[0].name != "handbook.txt"
+    assert await service.count_chunks(document.id) > 0
 
 
 @pytest.mark.asyncio

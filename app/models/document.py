@@ -27,7 +27,14 @@ class Document(Base):
     stored_filename: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(
-        Enum(DocumentStatus, name="document_status"),
+        Enum(
+            DocumentStatus,
+            name="document_status",
+            # Store the enum's *value* ("uploaded") rather than its member name
+            # ("UPLOADED") to match the lowercase values used by the Postgres enum
+            # type created in the Alembic migration.
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
         nullable=False,
         default=DocumentStatus.UPLOADED,
     )
