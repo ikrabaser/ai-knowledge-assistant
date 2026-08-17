@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 20
     upload_directory: str = "uploads"
 
+    # Authentication
+    jwt_secret_key: str = "insecure-development-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:

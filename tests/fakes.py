@@ -4,8 +4,10 @@ These avoid any real network calls to OpenAI and avoid requiring a live
 PostgreSQL/pgvector instance for unit tests.
 """
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from app.models.document import Document, DocumentStatus
+from app.models.user import User
 from app.providers.base_chat_provider import ChatProvider
 from app.providers.base_embedding_provider import EmbeddingProvider
 
@@ -86,6 +88,36 @@ class FakeChunkRepository:
     async def count_by_document_id(self, document_id: int) -> int:
         created = getattr(self, "created_chunks", [])
         return len([c for c in created if getattr(c, "document_id", None) == document_id])
+
+    async def commit(self) -> None:
+        pass
+
+
+class FakeUserRepository:
+    """In-memory stand-in for UserRepository, used to test AuthService."""
+
+    def __init__(self) -> None:
+        self._users: dict[int, User] = {}
+        self._next_id = 1
+
+    async def create(self, email: str, password_hash: str) -> User:
+        now = datetime.now(timezone.utc)
+        user = User(email=email, password_hash=password_hash, is_active=True)
+        user.id = self._next_id
+        user.created_at = now
+        user.updated_at = now
+        self._next_id += 1
+        self._users[user.id] = user
+        return user
+
+    async def get_by_id(self, user_id: int) -> User | None:
+        return self._users.get(user_id)
+
+    async def get_by_email(self, email: str) -> User | None:
+        for user in self._users.values():
+            if user.email == email:
+                return user
+        return None
 
     async def commit(self) -> None:
         pass

@@ -42,6 +42,42 @@ class EmbeddingProviderError(AppError):
 
 
 class ChatProviderError(AppError):
-    """Raised when the chat completion provider (OpenAI) fails or times out."""
+    """Raised when the chat completion provider (OpenAI/Anthropic) fails or times out."""
 
     status_code = 502
+
+
+class UserAlreadyExistsError(AppError):
+    """Raised when registering with an email that is already taken."""
+
+    status_code = 409
+
+
+class InvalidCredentialsError(AppError):
+    """Raised when login credentials are wrong, or a token is missing/invalid/expired."""
+
+    status_code = 401
+
+
+class InactiveUserError(AppError):
+    """Raised when an authenticated user's account has been deactivated."""
+
+    status_code = 403
+
+
+class WorkspaceNotFoundError(AppError):
+    """Raised when a requested workspace id does not exist or is not owned by the caller."""
+
+    status_code = 404
+
+
+class ConversationNotFoundError(AppError):
+    """Raised when a requested conversation id does not exist or is not owned by the caller."""
+
+    status_code = 404
+
+
+class ToolExecutionError(AppError):
+    """Raised when a requested LLM tool call is unknown, invalid, or fails to execute."""
+
+    status_code = 422
