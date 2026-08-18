@@ -7,6 +7,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import "./styles/global.css";
 import "./styles/masteacon-shell.css";
 import "./styles/masteacon-auth.css";
+import "./styles/masteacon-overview.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
