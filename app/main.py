@@ -1,12 +1,18 @@
 """FastAPI application entrypoint."""
+import time
+import uuid
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from fastapi.responses import JSONResponse
 
 from app.api.routes import agent, auth, conversations, documents, health, rag, search, workspaces
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging, get_logger
+from app.core.request_context import set_request_id
 
 settings = get_settings()
 configure_logging(debug=settings.debug)
@@ -17,6 +23,38 @@ app = FastAPI(
     description="Upload documents and ask questions about them using Retrieval-Augmented Generation.",
     version="0.1.0",
 )
+
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Assigns (or propagates) a request correlation id for structured logging.
+
+    Every log line emitted while handling a request — no matter which service
+    or repository logs it — is automatically tagged with this id (see
+    app.core.request_context / app.core.logging.JsonFormatter), and it's
+    echoed back as a response header so a client can report it for support.
+    """
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+        set_request_id(request_id)
+        started_at = time.perf_counter()
+
+        response = await call_next(request)
+
+        response.headers["X-Request-ID"] = request_id
+        logger.info(
+            "Handled request",
+            extra={
+                "http_method": request.method,
+                "http_path": request.url.path,
+                "http_status": response.status_code,
+                "duration_ms": round((time.perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return response
+
+
+app.add_middleware(RequestIDMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

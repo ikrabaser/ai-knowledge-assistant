@@ -87,7 +87,7 @@ class ConversationService:
         )
 
         response = await self._rag_service.ask(
-            question=content, workspace_id=conversation.workspace_id, history=history
+            question=content, workspace_id=conversation.workspace_id, history=history, user_id=user_id
         )
 
         assistant_message = await self._messages.create(

@@ -1,4 +1,5 @@
 """Retrieval-Augmented Generation pipeline: retrieve context, then ask the LLM to answer."""
+import time
 from dataclasses import dataclass
 
 from app.core.exceptions import ChatProviderError
@@ -56,19 +57,49 @@ class RagService:
         question: str,
         workspace_id: int,
         history: list[HistoryTurn] | None = None,
+        user_id: int | None = None,
     ) -> AskResponse:
+        total_started_at = time.perf_counter()
         question = question.strip()
+
+        retrieval_started_at = time.perf_counter()
         chunks = await self._retrieval_service.search(question, workspace_id=workspace_id)
+        retrieval_duration_ms = round((time.perf_counter() - retrieval_started_at) * 1000, 2)
+
+        log_fields = {
+            "event": "rag_request",
+            "user_id": user_id,
+            "workspace_id": workspace_id,
+            "provider": self._chat_provider.provider_name,
+            "model": self._chat_provider.model,
+            "retrieved_chunk_count": len(chunks),
+            "retrieval_duration_ms": retrieval_duration_ms,
+        }
 
         if not chunks:
+            log_fields["generation_duration_ms"] = 0
+            log_fields["total_duration_ms"] = round((time.perf_counter() - total_started_at) * 1000, 2)
+            log_fields["success"] = True
+            log_fields["grounded"] = False
+            logger.info("RAG request completed with no relevant context", extra=log_fields)
             return AskResponse(answer=NO_CONTEXT_ANSWER, sources=[])
 
         prompt = self._build_prompt(question, chunks, history or [])
+        generation_started_at = time.perf_counter()
         try:
             answer = await self._chat_provider.complete(SYSTEM_PROMPT, prompt)
         except Exception as exc:
-            logger.exception("Chat completion failed while answering question")
+            log_fields["generation_duration_ms"] = round((time.perf_counter() - generation_started_at) * 1000, 2)
+            log_fields["total_duration_ms"] = round((time.perf_counter() - total_started_at) * 1000, 2)
+            log_fields["success"] = False
+            logger.warning("RAG request failed during generation", extra=log_fields)
             raise ChatProviderError(f"Failed to generate an answer: {exc}") from exc
+
+        log_fields["generation_duration_ms"] = round((time.perf_counter() - generation_started_at) * 1000, 2)
+        log_fields["total_duration_ms"] = round((time.perf_counter() - total_started_at) * 1000, 2)
+        log_fields["success"] = True
+        log_fields["grounded"] = True
+        logger.info("RAG request completed", extra=log_fields)
 
         sources = [
             SourceItem(

@@ -26,9 +26,12 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
 class OpenAIChatProvider(ChatProvider):
     """Chat completion provider backed by the OpenAI Chat Completions API."""
 
+    provider_name = "openai"
+
     def __init__(self, client: AsyncOpenAI, model: str) -> None:
         self._client = client
         self._model = model
+        self.model = model
 
     async def complete(self, system_prompt: str, user_prompt: str) -> str:
         response = await self._client.chat.completions.create(

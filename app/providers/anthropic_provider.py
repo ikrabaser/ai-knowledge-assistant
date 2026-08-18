@@ -7,9 +7,12 @@ from app.providers.base_chat_provider import ChatProvider, RequestedToolCall, To
 class AnthropicChatProvider(ChatProvider):
     """Chat completion provider backed by the Anthropic Messages API."""
 
+    provider_name = "anthropic"
+
     def __init__(self, client: AsyncAnthropic, model: str) -> None:
         self._client = client
         self._model = model
+        self.model = model
 
     async def complete(self, system_prompt: str, user_prompt: str) -> str:
         response = await self._client.messages.create(
