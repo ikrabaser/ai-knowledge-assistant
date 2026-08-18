@@ -1,0 +1,152 @@
+/* =========================================================
+   MASTEACON — FINAL PRODUCT POLISH
+   ========================================================= */
+
+/* ---------- Register password state ---------- */
+
+.masteacon-register-password-hint {
+  min-height: 18px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  margin-top: -1px;
+
+  color: var(--text-faint);
+
+  font-size: 9px;
+}
+
+.masteacon-register-password-hint > span {
+  width: 15px;
+  height: 15px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  color: var(--text-faint);
+
+  font-size: 8px;
+
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.masteacon-register-password-hint
+  > span.complete {
+  border-color: rgba(93, 190, 138, 0.22);
+
+  background: rgba(93, 190, 138, 0.065);
+
+  color: #69c18f;
+}
+
+/* ---------- Better keyboard focus ---------- */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(238, 181, 70, 0.76);
+  outline-offset: 3px;
+}
+
+/* ---------- Smooth premium scrollbars ---------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(143, 153, 166, 0.32)
+    transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+
+  background:
+    rgba(143, 153, 166, 0.28);
+
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(226, 168, 58, 0.38);
+
+  background-clip: padding-box;
+}
+
+/* ---------- Disabled controls ---------- */
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* ---------- Better transitions ---------- */
+
+.sidebar-nav a,
+.btn,
+.segmented button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Prevent oversized media ---------- */
+
+img,
+svg {
+  max-width: 100%;
+}
+
+/* ---------- Light mode polish ---------- */
+
+:root:not([data-theme="dark"])
+  ::selection {
+  background: rgba(214, 154, 48, 0.20);
+}
+
+/* ---------- Responsive auth refinement ---------- */
+
+@media (max-width: 720px) {
+  .masteacon-auth-page {
+    min-height: 100svh;
+  }
+
+  .masteacon-register-password-hint {
+    font-size: 8px;
+  }
+}
+
+/* ---------- Accessibility: reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

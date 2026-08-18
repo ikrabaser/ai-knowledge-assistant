@@ -12,6 +12,7 @@ import "./styles/masteacon-library.css";
 import "./styles/masteacon-chat.css";
 import "./styles/masteacon-agent.css";
 import "./styles/masteacon-workspaces.css";
+import "./styles/masteacon-polish.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
