@@ -18,6 +18,15 @@ settings = get_settings()
 configure_logging(debug=settings.debug)
 logger = get_logger(__name__)
 
+_INSECURE_DEFAULT_JWT_SECRET = "insecure-development-secret-change-me"
+if settings.app_env == "production" and settings.jwt_secret_key == _INSECURE_DEFAULT_JWT_SECRET:
+    # Refuse to boot with the default signing key in production — every token issued
+    # with it would be forgeable by anyone who has read this open-source repository.
+    raise RuntimeError(
+        "JWT_SECRET_KEY is still set to the insecure default while APP_ENV=production. "
+        "Set a unique, secret JWT_SECRET_KEY before starting the application."
+    )
+
 app = FastAPI(
     title=settings.app_name,
     description="Upload documents and ask questions about them using Retrieval-Augmented Generation.",
