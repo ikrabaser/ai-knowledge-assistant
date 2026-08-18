@@ -1,74 +1,28 @@
-"""OpenAI implementations of the embedding and chat provider interfaces."""
-import json
+"""OpenAI implementations of the embedding and chat provider interfaces, via LangChain."""
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from openai import AsyncOpenAI
-
-from app.providers.base_chat_provider import ChatProvider, RequestedToolCall, ToolCallDecision, ToolSpec
 from app.providers.base_embedding_provider import EmbeddingProvider
+from app.providers.langchain_chat_provider import LangChainChatProvider
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
-    """Embedding provider backed by the OpenAI Embeddings API."""
+    """Embedding provider backed by LangChain's `OpenAIEmbeddings` wrapper."""
 
-    def __init__(self, client: AsyncOpenAI, model: str) -> None:
-        self._client = client
-        self._model = model
+    def __init__(self, api_key: str, model: str) -> None:
+        self._embeddings = OpenAIEmbeddings(api_key=api_key, model=model)
 
     async def embed_text(self, text: str) -> list[float]:
-        embeddings = await self.embed_batch([text])
-        return embeddings[0]
+        return await self._embeddings.aembed_query(text)
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.embeddings.create(model=self._model, input=texts)
-        return [item.embedding for item in response.data]
+        return await self._embeddings.aembed_documents(texts)
 
 
-class OpenAIChatProvider(ChatProvider):
-    """Chat completion provider backed by the OpenAI Chat Completions API."""
+class OpenAIChatProvider(LangChainChatProvider):
+    """Chat completion provider backed by LangChain's `ChatOpenAI` wrapper."""
 
     provider_name = "openai"
 
-    def __init__(self, client: AsyncOpenAI, model: str) -> None:
-        self._client = client
-        self._model = model
-        self.model = model
-
-    async def complete(self, system_prompt: str, user_prompt: str) -> str:
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.2,
-        )
-        return response.choices[0].message.content or ""
-
-    async def decide_tool_calls(
-        self, system_prompt: str, user_prompt: str, tools: list[ToolSpec]
-    ) -> ToolCallDecision:
-        openai_tools = [
-            {
-                "type": "function",
-                "function": {"name": t.name, "description": t.description, "parameters": t.parameters},
-            }
-            for t in tools
-        ]
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            tools=openai_tools,
-            tool_choice="auto",
-            temperature=0.2,
-        )
-        message = response.choices[0].message
-        tool_calls = [
-            RequestedToolCall(
-                id=call.id, name=call.function.name, arguments=json.loads(call.function.arguments or "{}")
-            )
-            for call in (message.tool_calls or [])
-        ]
-        return ToolCallDecision(text=message.content, tool_calls=tool_calls)
+    def __init__(self, api_key: str, model: str) -> None:
+        chat_model = ChatOpenAI(api_key=api_key, model=model, temperature=0.2)
+        super().__init__(chat_model=chat_model, model=model)
