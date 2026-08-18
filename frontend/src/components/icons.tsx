@@ -98,6 +98,12 @@ export const XIcon = (p: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const MenuIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Icon>
+);
+
 export const ClockIcon = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="8" />

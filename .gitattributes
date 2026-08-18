@@ -1,0 +1,8 @@
+# Masteacon repository line-ending policy
+# Keep source and configuration files consistent across Windows, macOS and Linux.
+
+* text=auto eol=lf
+
+# Windows-native scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf

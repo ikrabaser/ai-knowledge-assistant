@@ -14,3 +14,8 @@ build/
 .coverage
 htmlcov/
 .mypy_cache/
+
+# Frontend TypeScript/Vite generated files
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
