@@ -3,9 +3,6 @@
 Keeps provider-specific branching out of the business logic (RagService/routes):
 those only ever see the ChatProvider interface, never know which LLM is behind it.
 """
-from anthropic import AsyncAnthropic
-from openai import AsyncOpenAI
-
 from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.providers.anthropic_provider import AnthropicChatProvider
@@ -26,12 +23,10 @@ def create_chat_provider(settings: Settings) -> ChatProvider:
     provider_name = settings.llm_provider.strip().lower()
 
     if provider_name == "openai":
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
-        return OpenAIChatProvider(client=client, model=settings.openai_chat_model)
+        return OpenAIChatProvider(api_key=settings.openai_api_key, model=settings.openai_chat_model)
 
     if provider_name == "anthropic":
-        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-        return AnthropicChatProvider(client=client, model=settings.anthropic_chat_model)
+        return AnthropicChatProvider(api_key=settings.anthropic_api_key, model=settings.anthropic_chat_model)
 
     raise UnsupportedLLMProviderError(
         f"Unsupported LLM_PROVIDER '{settings.llm_provider}'. Supported: {', '.join(SUPPORTED_PROVIDERS)}."

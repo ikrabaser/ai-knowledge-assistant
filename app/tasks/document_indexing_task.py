@@ -7,7 +7,6 @@ from the API process, since it runs in a separate process entirely.
 """
 import asyncio
 
-from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
@@ -43,7 +42,7 @@ async def _run_indexing(document_id: int) -> None:
     try:
         async with session_factory() as session:
             embedding_provider = OpenAIEmbeddingProvider(
-                client=AsyncOpenAI(api_key=settings.openai_api_key),
+                api_key=settings.openai_api_key,
                 model=settings.openai_embedding_model,
             )
             indexing_service = DocumentIndexingService(

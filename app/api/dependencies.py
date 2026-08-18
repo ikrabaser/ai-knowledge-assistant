@@ -1,10 +1,7 @@
 """FastAPI dependency providers wiring repositories, services and providers together."""
-from functools import lru_cache
-
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -43,17 +40,8 @@ from app.tools.summarize_document_tool import SummarizeDocumentTool
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
-@lru_cache
-def get_openai_client() -> AsyncOpenAI:
-    settings = get_settings()
-    return AsyncOpenAI(api_key=settings.openai_api_key)
-
-
-def get_embedding_provider(
-    settings: Settings = Depends(get_settings),
-    client: AsyncOpenAI = Depends(get_openai_client),
-) -> EmbeddingProvider:
-    return OpenAIEmbeddingProvider(client=client, model=settings.openai_embedding_model)
+def get_embedding_provider(settings: Settings = Depends(get_settings)) -> EmbeddingProvider:
+    return OpenAIEmbeddingProvider(api_key=settings.openai_api_key, model=settings.openai_embedding_model)
 
 
 def get_chat_provider(settings: Settings = Depends(get_settings)) -> ChatProvider:

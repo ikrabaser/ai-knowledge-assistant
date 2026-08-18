@@ -46,7 +46,14 @@ account that owns it.
 - **ORM / Migrations:** SQLAlchemy 2.0 (async) + Alembic
 - **Background jobs:** Celery + Redis (asynchronous document indexing)
 - **Config:** Pydantic Settings
-- **LLM providers:** OpenAI and Anthropic (chat), OpenAI (embeddings)
+- **RAG orchestration:** [LangChain](https://python.langchain.com/) — token-aware chunking
+  (`TokenTextSplitter`), embeddings, chat models and the retriever/vector-store interface all go
+  through LangChain, behind this project's own `EmbeddingProvider`/`ChatProvider`/`VectorStore`
+  abstractions so business logic never touches a provider SDK directly
+- **LLM providers:** OpenAI and Anthropic/Claude (chat, via `ChatOpenAI` / `ChatAnthropic`),
+  OpenAI (embeddings, via `OpenAIEmbeddings`) — function calling for both is driven by
+  LangChain's `bind_tools`, which normalizes OpenAI's and Anthropic's very different native
+  tool-calling formats into one shape
 - **Auth:** JWT (PyJWT + bcrypt password hashing)
 - **Parsing:** pypdf, python-docx
 - **Tokenization:** tiktoken
@@ -92,6 +99,7 @@ app/
 │   ├── document_service.py       # Validate → store → dispatch for indexing
 │   ├── document_indexing_service.py  # Parse → chunk → embed (runs in the worker)
 │   ├── parsing_service.py, chunking_service.py, embedding_service.py
+│   ├── langchain_vector_store.py # ChunkVectorStore: a LangChain VectorStore over pgvector
 │   ├── retrieval_service.py      # Semantic search (+ optional reranking)
 │   ├── reranking_service.py      # Vector + lexical blended reranker
 │   ├── rag_service.py            # Retrieval + prompt construction + generation
@@ -99,9 +107,11 @@ app/
 │   ├── agent_service.py          # One bounded round of LLM tool-calling
 │   └── tool_execution_service.py # Validates/authorizes/executes a single tool call
 │
-├── providers/                   # External API abstractions
+├── providers/                   # External API abstractions, backed by LangChain
 │   ├── base_embedding_provider.py, base_chat_provider.py
-│   ├── openai_provider.py, anthropic_provider.py
+│   ├── langchain_chat_provider.py  # Shared LangChain-backed complete()/tool-calling logic
+│   ├── openai_provider.py       # ChatOpenAI + OpenAIEmbeddings
+│   ├── anthropic_provider.py    # ChatAnthropic
 │   └── chat_provider_factory.py
 │
 ├── tools/                       # Read-only agent tools (list/get/summarize, workspace-scoped)
@@ -119,19 +129,21 @@ frontend/    # React + Vite + TypeScript web app
 1. **Upload:** a document is validated, safely stored, and its indexing job is dispatched to a
    Celery worker — the upload request returns immediately.
 2. **Index (async, in the worker):** the document is parsed into plain text, split into
-   overlapping token-bounded chunks (`CHUNK_SIZE` / `CHUNK_OVERLAP`), embedded via OpenAI
-   (`OPENAI_EMBEDDING_MODEL`), and stored in PostgreSQL using `pgvector` columns. Transient
-   failures are retried automatically, up to a bounded number of attempts with exponential
-   backoff.
+   overlapping token-bounded chunks by LangChain's `TokenTextSplitter` (`CHUNK_SIZE` /
+   `CHUNK_OVERLAP`), embedded via LangChain's `OpenAIEmbeddings` (`OPENAI_EMBEDDING_MODEL`), and
+   stored in PostgreSQL using `pgvector` columns. Transient failures are retried automatically,
+   up to a bounded number of attempts with exponential backoff.
 3. **Ask:** a question is embedded the same way; the most similar chunks are retrieved from the
-   caller's own workspace via cosine similarity (`SEARCH_TOP_K` / `SIMILARITY_THRESHOLD`), with
-   optional filtering by document or content type.
+   caller's own workspace through `ChunkVectorStore` — a LangChain `VectorStore` adapter over the
+   pgvector-backed repository — via cosine similarity (`SEARCH_TOP_K` / `SIMILARITY_THRESHOLD`),
+   with optional filtering by document or content type. `workspace_id` is a mandatory filter the
+   adapter refuses to search without, so retrieval can never cross a workspace boundary.
 4. **Rerank (optional):** if enabled, a wider candidate set is fetched and reordered by a blend
    of vector similarity and lexical overlap before being truncated to the final top-k.
 5. **Generate:** the retrieved chunks — plus, inside a conversation, a bounded window of prior
-   turns — are placed into a strict, context-only system prompt sent to the configured chat
-   provider (OpenAI or Anthropic). If no relevant context is found, the assistant explicitly says
-   so instead of hallucinating an answer.
+   turns — are placed into a strict, context-only system prompt sent to the configured LangChain
+   chat model (`ChatOpenAI` or `ChatAnthropic`). If no relevant context is found, the assistant
+   explicitly says so instead of hallucinating an answer.
 6. **Respond:** the answer is returned together with the list of source chunks that were used.
 
 The **agent** endpoint follows a parallel, bounded path: the model is offered a small set of

@@ -1,9 +1,16 @@
-"""Splits extracted document text into overlapping, token-bounded chunks."""
+"""Splits extracted document text into overlapping, token-bounded chunks.
+
+Uses LangChain's `TokenTextSplitter`, which walks the text in raw tiktoken-token
+space (rather than characters) so `chunk_size`/`chunk_overlap` mean exactly what
+they say regardless of language or punctuation density.
+"""
 from dataclasses import dataclass
 
 import tiktoken
+from langchain_text_splitters import TokenTextSplitter
 
-_ENCODING = tiktoken.get_encoding("cl100k_base")
+_ENCODING_NAME = "cl100k_base"
+_encoding = tiktoken.get_encoding(_ENCODING_NAME)
 
 
 @dataclass(frozen=True)
@@ -23,26 +30,17 @@ class ChunkingService:
             raise ValueError("chunk_size must be positive")
         if chunk_overlap < 0 or chunk_overlap >= chunk_size:
             raise ValueError("chunk_overlap must be non-negative and smaller than chunk_size")
-        self._chunk_size = chunk_size
-        self._chunk_overlap = chunk_overlap
+        self._splitter = TokenTextSplitter(
+            encoding_name=_ENCODING_NAME, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
 
     def split(self, text: str) -> list[TextChunk]:
-        tokens = _ENCODING.encode(text)
-        if not tokens:
-            return []
-
         chunks: list[TextChunk] = []
-        step = self._chunk_size - self._chunk_overlap
-        start = 0
-        index = 0
-        while start < len(tokens):
-            end = min(start + self._chunk_size, len(tokens))
-            token_slice = tokens[start:end]
-            content = _ENCODING.decode(token_slice).strip()
-            if content:
-                chunks.append(TextChunk(content=content, chunk_index=index, token_count=len(token_slice)))
-                index += 1
-            if end == len(tokens):
-                break
-            start += step
+        for raw_chunk in self._splitter.split_text(text):
+            content = raw_chunk.strip()
+            if not content:
+                continue
+            chunks.append(
+                TextChunk(content=content, chunk_index=len(chunks), token_count=len(_encoding.encode(content)))
+            )
         return chunks
