@@ -2,6 +2,7 @@
 import pytest
 
 from app.services.embedding_service import EmbeddingService
+from app.services.reranking_service import RerankingService
 from app.services.retrieval_service import RetrievalService
 from tests.fakes import FakeChunkRepository, FakeChunkRow, FakeEmbeddingProvider
 
@@ -97,3 +98,72 @@ async def test_search_can_be_scoped_to_a_single_document() -> None:
 
     assert len(results) == 1
     assert results[0].filename == "a.pdf"
+
+
+@pytest.mark.asyncio
+async def test_search_can_be_scoped_to_a_content_type() -> None:
+    rows = [
+        FakeChunkRow(1, "a.pdf", 0, "Content A.", 0.80, workspace_id=WORKSPACE_ID, content_type="application/pdf"),
+        FakeChunkRow(2, "b.txt", 0, "Content B.", 0.90, workspace_id=WORKSPACE_ID, content_type="text/plain"),
+    ]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+    )
+
+    results = await retrieval_service.search("anything", workspace_id=WORKSPACE_ID, content_type="application/pdf")
+
+    assert len(results) == 1
+    assert results[0].filename == "a.pdf"
+
+
+@pytest.mark.asyncio
+async def test_search_without_reranking_service_is_unaffected_by_rerank_settings() -> None:
+    """No RerankingService wired in => identical behavior to before reranking existed."""
+    rows = [FakeChunkRow(i, f"doc-{i}.pdf", 0, f"chunk {i}", 0.9 - i * 0.01, workspace_id=WORKSPACE_ID) for i in range(10)]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+        reranking_service=None,
+        candidate_count=20,
+        rerank_top_k=2,
+    )
+
+    results = await retrieval_service.search("query", workspace_id=WORKSPACE_ID)
+
+    # rerank_top_k is ignored entirely when there's no reranker — default_top_k wins.
+    assert len(results) == 5
+
+
+@pytest.mark.asyncio
+async def test_search_with_reranking_fetches_candidates_then_truncates_to_rerank_top_k() -> None:
+    rows = [
+        FakeChunkRow(1, "off-topic.pdf", 0, "Completely unrelated filler content.", 0.95, workspace_id=WORKSPACE_ID),
+        FakeChunkRow(
+            2, "on-topic.pdf", 0, "Annual leave policy grants fourteen days per year.", 0.40, workspace_id=WORKSPACE_ID
+        ),
+        *[
+            FakeChunkRow(10 + i, f"filler-{i}.pdf", 0, "irrelevant filler", 0.3, workspace_id=WORKSPACE_ID)
+            for i in range(5)
+        ],
+    ]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+        reranking_service=RerankingService(lexical_weight=0.9),
+        candidate_count=20,
+        rerank_top_k=2,
+    )
+
+    results = await retrieval_service.search("annual leave policy", workspace_id=WORKSPACE_ID)
+
+    # Reranked to just 2 results, and the lexically-matching chunk wins first place
+    # despite its lower raw vector similarity score.
+    assert len(results) == 2
+    assert results[0].document_id == 2

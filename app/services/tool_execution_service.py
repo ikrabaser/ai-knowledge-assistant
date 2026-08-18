@@ -1,4 +1,5 @@
 """Validates arguments, enforces authorization and executes a single tool call safely."""
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -29,23 +30,41 @@ class ToolExecutionService:
     A tool call can fail for many reasons (unknown tool, bad arguments, the user
     doesn't own the referenced workspace/document, a downstream error) — none of
     those should ever crash the request. Every outcome is captured as a structured
-    ToolExecutionResult and logged, so the LLM (and the caller) always gets a clean
-    answer back instead of a 500.
+    ToolExecutionResult and logged (tool_name/user_id/success/duration, never the
+    document content a tool might return), so the LLM (and the caller) always gets
+    a clean answer back instead of a 500.
     """
 
     def __init__(self, registry: ToolRegistry) -> None:
         self._registry = registry
 
-    async def execute(self, tool_call_id: str, name: str, raw_arguments: dict, context: ToolContext) -> ToolExecutionResult:
+    async def execute(
+        self, tool_call_id: str, name: str, raw_arguments: dict, context: ToolContext
+    ) -> ToolExecutionResult:
+        started_at = time.perf_counter()
+
+        def _log(success: bool, error: str | None = None) -> None:
+            logger.info(
+                "Tool call finished" if success else "Tool call failed",
+                extra={
+                    "event": "tool_call",
+                    "tool_name": name,
+                    "user_id": context.user_id,
+                    "success": success,
+                    "duration_ms": round((time.perf_counter() - started_at) * 1000, 2),
+                    **({"error_type": error} if error else {}),
+                },
+            )
+
         tool = self._registry.get(name)
         if tool is None:
-            logger.warning("Rejected call to unknown tool '%s' (user_id=%s)", name, context.user_id)
+            _log(False, "unknown_tool")
             return ToolExecutionResult(tool_call_id, name, False, None, f"Unknown tool '{name}'.")
 
         try:
             args = tool.args_model.model_validate(raw_arguments)
         except ValidationError as exc:
-            logger.warning("Rejected invalid arguments for tool '%s' (user_id=%s): %s", name, context.user_id, exc)
+            _log(False, "invalid_arguments")
             return ToolExecutionResult(tool_call_id, name, False, None, f"Invalid arguments: {exc}")
 
         try:
@@ -53,11 +72,12 @@ class ToolExecutionService:
         except AppError as exc:
             # Includes authorization failures (e.g. WorkspaceNotFoundError for a
             # workspace/document the caller doesn't own) — logged, not leaked as a 500.
-            logger.warning("Tool '%s' failed for user_id=%s: %s", name, context.user_id, exc.message)
+            _log(False, "app_error")
             return ToolExecutionResult(tool_call_id, name, False, None, exc.message)
         except Exception:
-            logger.exception("Unexpected error executing tool '%s' (user_id=%s)", name, context.user_id)
+            logger.exception("Unexpected error executing tool '%s'", name, extra={"tool_name": name, "user_id": context.user_id})
+            _log(False, "unexpected_error")
             return ToolExecutionResult(tool_call_id, name, False, None, "Tool execution failed.")
 
-        logger.info("Tool '%s' succeeded (user_id=%s)", name, context.user_id)
+        _log(True)
         return ToolExecutionResult(tool_call_id, name, True, result, None)

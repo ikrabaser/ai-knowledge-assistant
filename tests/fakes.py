@@ -68,6 +68,7 @@ class FakeChunkRow:
     content: str
     similarity_score: float
     workspace_id: int = 1
+    content_type: str = "text/plain"
 
 
 class FakeChunkRepository:
@@ -83,6 +84,7 @@ class FakeChunkRepository:
         similarity_threshold: float,
         workspace_id: int,
         document_id: int | None = None,
+        content_type: str | None = None,
     ):
         matches = [
             row
@@ -90,6 +92,7 @@ class FakeChunkRepository:
             if row.similarity_score >= similarity_threshold
             and row.workspace_id == workspace_id
             and (document_id is None or row.document_id == document_id)
+            and (content_type is None or row.content_type == content_type)
         ]
         matches.sort(key=lambda r: r.similarity_score, reverse=True)
 

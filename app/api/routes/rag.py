@@ -20,4 +20,4 @@ async def ask_question(
     """Answer a natural-language question using retrieval-augmented generation."""
     await workspace_service.get_owned_workspace(request.workspace_id, current_user.id)
 
-    return await rag_service.ask(request.question, workspace_id=request.workspace_id)
+    return await rag_service.ask(request.question, workspace_id=request.workspace_id, user_id=current_user.id)

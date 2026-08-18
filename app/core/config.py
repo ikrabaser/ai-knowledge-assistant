@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     search_top_k: int = 5
     similarity_threshold: float = 0.3
 
+    # Reranking — a lightweight second-stage pass over vector-search candidates.
+    # When disabled, retrieval behaves exactly as before (vector search only).
+    rerank_enabled: bool = False
+    retrieval_candidate_count: int = 20
+    rerank_top_k: int = 5
+
     # Uploads
     max_upload_size_mb: int = 20
     upload_directory: str = "uploads"

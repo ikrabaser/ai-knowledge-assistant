@@ -25,6 +25,7 @@ async def semantic_search(
         workspace_id=request.workspace_id,
         limit=request.limit,
         document_id=request.document_id,
+        content_type=request.content_type,
     )
     return SearchResponse(
         query=request.query,

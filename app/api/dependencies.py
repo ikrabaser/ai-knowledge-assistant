@@ -29,6 +29,7 @@ from app.services.embedding_service import EmbeddingService
 from app.services.agent_service import AgentService
 from app.services.indexing_dispatcher import IndexingDispatcher
 from app.services.rag_service import RagService
+from app.services.reranking_service import RerankingService
 from app.services.retrieval_service import RetrievalService
 from app.services.tool_execution_service import ToolExecutionService
 from app.services.workspace_service import WorkspaceService
@@ -136,16 +137,27 @@ def get_document_service(
     )
 
 
+def get_reranking_service(settings: Settings = Depends(get_settings)) -> RerankingService | None:
+    """Return a RerankingService only when reranking is enabled — keeps the
+    "disabled means unchanged vector-search behavior" contract explicit here.
+    """
+    return RerankingService() if settings.rerank_enabled else None
+
+
 def get_retrieval_service(
     settings: Settings = Depends(get_settings),
     chunk_repository: ChunkRepository = Depends(get_chunk_repository),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
+    reranking_service: RerankingService | None = Depends(get_reranking_service),
 ) -> RetrievalService:
     return RetrievalService(
         chunk_repository=chunk_repository,
         embedding_service=embedding_service,
         default_top_k=settings.search_top_k,
         similarity_threshold=settings.similarity_threshold,
+        reranking_service=reranking_service,
+        candidate_count=settings.retrieval_candidate_count,
+        rerank_top_k=settings.rerank_top_k,
     )
 
 

@@ -32,6 +32,11 @@ class ToolCallDecision:
 class ChatProvider(ABC):
     """Any provider capable of producing a chat completion from messages."""
 
+    #: Short, provider-agnostic identifiers for observability/logging only
+    #: (never used for branching logic — see chat_provider_factory for that).
+    provider_name: str = "unknown"
+    model: str = "unknown"
+
     @abstractmethod
     async def complete(self, system_prompt: str, user_prompt: str) -> str:
         """Return the model's answer text given a system and user prompt."""

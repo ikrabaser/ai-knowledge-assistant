@@ -10,6 +10,7 @@ structured results are then handed back to the model to produce the final answer
 No loop — this can't run away regardless of what the model asks for.
 """
 import json
+import time
 
 from app.core.logging import get_logger
 from app.providers.base_chat_provider import ChatProvider
@@ -55,14 +56,29 @@ class AgentService:
         self._tool_execution_service = tool_execution_service
 
     async def ask(self, question: str, user_id: int) -> AgentAskResponse:
+        total_started_at = time.perf_counter()
         question = question.strip()
         context = ToolContext(user_id=user_id)
 
+        decision_started_at = time.perf_counter()
         decision = await self._chat_provider.decide_tool_calls(
             SYSTEM_PROMPT, question, self._tool_registry.specs()
         )
+        decision_duration_ms = round((time.perf_counter() - decision_started_at) * 1000, 2)
+
+        log_fields = {
+            "event": "agent_request",
+            "user_id": user_id,
+            "provider": self._chat_provider.provider_name,
+            "model": self._chat_provider.model,
+            "decision_duration_ms": decision_duration_ms,
+        }
 
         if not decision.tool_calls:
+            log_fields["tool_call_count"] = 0
+            log_fields["total_duration_ms"] = round((time.perf_counter() - total_started_at) * 1000, 2)
+            log_fields["success"] = True
+            logger.info("Agent request completed without calling any tool", extra=log_fields)
             return AgentAskResponse(answer=(decision.text or "").strip(), tool_calls=[])
 
         results: list[ToolExecutionResult] = []
@@ -76,5 +92,15 @@ class AgentService:
         )
         follow_up_prompt = f"Question: {question}\n\nTool results:\n{results_text}\n\nAnswer:"
 
+        generation_started_at = time.perf_counter()
         answer = await self._chat_provider.complete(FINAL_ANSWER_SYSTEM_PROMPT, follow_up_prompt)
+        generation_duration_ms = round((time.perf_counter() - generation_started_at) * 1000, 2)
+
+        log_fields["generation_duration_ms"] = generation_duration_ms
+        log_fields["total_duration_ms"] = round((time.perf_counter() - total_started_at) * 1000, 2)
+        log_fields["tool_call_count"] = len(results)
+        log_fields["tool_names"] = [r.name for r in results]
+        log_fields["success"] = all(r.success for r in results)
+        logger.info("Agent request completed", extra=log_fields)
+
         return AgentAskResponse(answer=answer.strip(), tool_calls=results)
