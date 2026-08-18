@@ -8,6 +8,7 @@ import "./styles/global.css";
 import "./styles/masteacon-shell.css";
 import "./styles/masteacon-auth.css";
 import "./styles/masteacon-overview.css";
+import "./styles/masteacon-library.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
