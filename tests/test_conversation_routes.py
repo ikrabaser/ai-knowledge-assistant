@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.api.dependencies import (
     get_auth_service,
+    get_chat_provider,
     get_chunk_repository,
     get_conversation_repository,
     get_embedding_service,
@@ -16,6 +17,7 @@ from app.main import app
 from app.services.auth_service import AuthService
 from app.services.embedding_service import EmbeddingService
 from tests.fakes import (
+    FakeChatProvider,
     FakeChunkRepository,
     FakeChunkRow,
     FakeConversationRepository,
@@ -44,6 +46,9 @@ def client():
     app.dependency_overrides[get_message_repository] = lambda: messages
     app.dependency_overrides[get_chunk_repository] = lambda: chunks
     app.dependency_overrides[get_embedding_service] = lambda: EmbeddingService(FakeEmbeddingProvider())
+    app.dependency_overrides[get_chat_provider] = lambda: FakeChatProvider(
+        answer="Annual leave is 14 days per year."
+    )
 
     with TestClient(app) as test_client:
         yield test_client
