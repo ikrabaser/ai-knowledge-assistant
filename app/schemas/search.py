@@ -9,6 +9,11 @@ class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
     limit: int = Field(default=5, ge=1, le=50)
     document_id: int | None = None
+    content_type: str | None = Field(
+        default=None,
+        description="Restrict results to chunks from documents of this MIME type, "
+        "e.g. 'application/pdf', 'text/plain'.",
+    )
 
 
 class SearchResultItem(BaseModel):

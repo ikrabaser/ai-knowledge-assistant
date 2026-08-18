@@ -37,6 +37,7 @@ class RetrievalService:
         workspace_id: int,
         limit: int | None = None,
         document_id: int | None = None,
+        content_type: str | None = None,
     ) -> list[RetrievedChunk]:
         query = query.strip()
         if not query:
@@ -49,6 +50,7 @@ class RetrievalService:
             similarity_threshold=self._similarity_threshold,
             workspace_id=workspace_id,
             document_id=document_id,
+            content_type=content_type,
         )
 
         return [

@@ -97,3 +97,22 @@ async def test_search_can_be_scoped_to_a_single_document() -> None:
 
     assert len(results) == 1
     assert results[0].filename == "a.pdf"
+
+
+@pytest.mark.asyncio
+async def test_search_can_be_scoped_to_a_content_type() -> None:
+    rows = [
+        FakeChunkRow(1, "a.pdf", 0, "Content A.", 0.80, workspace_id=WORKSPACE_ID, content_type="application/pdf"),
+        FakeChunkRow(2, "b.txt", 0, "Content B.", 0.90, workspace_id=WORKSPACE_ID, content_type="text/plain"),
+    ]
+    retrieval_service = RetrievalService(
+        chunk_repository=FakeChunkRepository(rows),
+        embedding_service=EmbeddingService(FakeEmbeddingProvider()),
+        default_top_k=5,
+        similarity_threshold=0.0,
+    )
+
+    results = await retrieval_service.search("anything", workspace_id=WORKSPACE_ID, content_type="application/pdf")
+
+    assert len(results) == 1
+    assert results[0].filename == "a.pdf"
