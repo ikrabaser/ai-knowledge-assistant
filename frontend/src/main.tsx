@@ -10,6 +10,7 @@ import "./styles/masteacon-auth.css";
 import "./styles/masteacon-overview.css";
 import "./styles/masteacon-library.css";
 import "./styles/masteacon-chat.css";
+import "./styles/masteacon-agent.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
