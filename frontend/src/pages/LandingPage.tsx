@@ -3,83 +3,42 @@ import { Link } from "react-router-dom";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { Logo } from "../components/Logo";
 import { ThemeSwitcher } from "../components/ThemeSwitcher";
+import { useI18n } from "../context/I18nContext";
+import { landingTranslations } from "../i18n/landingTranslations";
 
 type PreviewKey = "command" | "library" | "chat" | "agent";
 
-interface PreviewTab {
-  key: PreviewKey;
-  label: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  metricLabel: string;
-  metricValue: string;
-}
-
-const previewTabs: PreviewTab[] = [
-  {
-    key: "command",
-    label: "Command Center",
-    eyebrow: "KNOWLEDGE COMMAND CENTER",
-    title: "See what your knowledge can do.",
-    description:
-      "Track indexed knowledge, retrieval health, grounded activity and workspace intelligence from one calm operating surface.",
-    metricLabel: "Knowledge coverage",
-    metricValue: "100%",
-  },
-  {
-    key: "library",
-    label: "Knowledge Library",
-    eyebrow: "MASTEACON INDEX",
-    title: "Bring scattered knowledge into one layer.",
-    description:
-      "Upload and organize PDF, DOCX and TXT content while Masteacon prepares it for semantic retrieval and grounded answers.",
-    metricLabel: "Indexed documents",
-    metricValue: "24",
-  },
-  {
-    key: "chat",
-    label: "Ask Masteacon",
-    eyebrow: "GROUNDED ANSWERS",
-    title: "Ask naturally. Verify every answer.",
-    description:
-      "Move beyond keyword search with contextual retrieval, source evidence and answers grounded in the knowledge you control.",
-    metricLabel: "Source grounding",
-    metricValue: "Active",
-  },
-  {
-    key: "agent",
-    label: "AI Agent",
-    eyebrow: "AGENT EXECUTION",
-    title: "Turn knowledge into action.",
-    description:
-      "Run intelligent workflows across documents and workspaces with visible tool traces and structured execution feedback.",
-    metricLabel: "Tool trace",
-    metricValue: "Visible",
-  },
-];
-
-const withoutMasteacon = [
-  "Knowledge scattered across documents and folders",
-  "Keyword search misses meaning and context",
-  "Teams repeat the same research",
-  "AI answers arrive without evidence",
-  "Important knowledge disappears inside silos",
-];
-
-const withMasteacon = [
-  "One searchable intelligence layer",
-  "Semantic retrieval beyond exact keywords",
-  "Grounded answers with source evidence",
-  "AI agents working across trusted knowledge",
-  "Organized workspaces with controlled context",
-];
-
 export function LandingPage() {
-  const [activePreview, setActivePreview] = useState<PreviewKey>("command");
+  const { locale } = useI18n();
+  const copy = landingTranslations[locale];
+
+  const [activePreview, setActivePreview] =
+    useState<PreviewKey>("command");
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const previewTabs = [
+    {
+      key: "command" as const,
+      ...copy.preview.tabs.command,
+    },
+    {
+      key: "library" as const,
+      ...copy.preview.tabs.library,
+    },
+    {
+      key: "chat" as const,
+      ...copy.preview.tabs.chat,
+    },
+    {
+      key: "agent" as const,
+      ...copy.preview.tabs.agent,
+    },
+  ];
 
   const selectedPreview =
-    previewTabs.find((tab) => tab.key === activePreview) ?? previewTabs[0];
+    previewTabs.find((tab) => tab.key === activePreview) ??
+    previewTabs[0];
 
   return (
     <main className="masteacon-landing">
@@ -90,16 +49,17 @@ export function LandingPage() {
         <Link
           to="/"
           className="masteacon-landing-brand"
-          aria-label="Masteacon home"
+          aria-label="Masteacon"
         >
           <Logo size={34} withWordmark />
         </Link>
 
-        <nav className="masteacon-landing-nav" aria-label="Primary navigation">
-          <a href="#product">Product</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#security">Security</a>
+        <nav className="masteacon-landing-nav">
+          <a href="#product">{copy.nav.product}</a>
+          <a href="#solutions">{copy.nav.solutions}</a>
+          <a href="#how-it-works">{copy.nav.howItWorks}</a>
+          <a href="#architecture">{copy.nav.architecture}</a>
+          <a href="#security">{copy.nav.security}</a>
         </nav>
 
         <div className="masteacon-landing-actions">
@@ -109,56 +69,156 @@ export function LandingPage() {
           </div>
 
           <Link to="/login" className="masteacon-landing-signin">
-            Sign in
+            {copy.nav.signIn}
           </Link>
 
           <Link to="/register" className="masteacon-landing-cta-small">
-            Get started
+            {copy.nav.getStarted}
             <span aria-hidden="true">→</span>
           </Link>
+
+          <button
+            type="button"
+            className="masteacon-landing-menu-button"
+            aria-label={
+              mobileMenuOpen
+                ? copy.nav.closeMenu
+                : copy.nav.openMenu
+            }
+            aria-expanded={mobileMenuOpen}
+            onClick={() =>
+              setMobileMenuOpen((current) => !current)
+            }
+          >
+            <span />
+            <span />
+          </button>
         </div>
       </header>
+
+      {mobileMenuOpen && (
+        <>
+          <button
+            type="button"
+            className="masteacon-landing-mobile-backdrop"
+            aria-label={copy.nav.closeMenu}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          <div className="masteacon-landing-mobile-menu">
+            <div className="masteacon-landing-mobile-menu-label">
+              {copy.nav.explore}
+            </div>
+
+            <nav>
+              <a
+                href="#product"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>01</span>
+                {copy.nav.product}
+              </a>
+
+              <a
+                href="#solutions"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>02</span>
+                {copy.nav.solutions}
+              </a>
+
+              <a
+                href="#how-it-works"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>03</span>
+                {copy.nav.howItWorks}
+              </a>
+
+              <a
+                href="#architecture"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>04</span>
+                {copy.nav.architecture}
+              </a>
+
+              <a
+                href="#security"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>05</span>
+                {copy.nav.security}
+              </a>
+            </nav>
+
+            <div className="masteacon-landing-mobile-preferences">
+              <ThemeSwitcher />
+              <LocaleSwitcher />
+            </div>
+
+            <div className="masteacon-landing-mobile-account">
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {copy.nav.signIn}
+              </Link>
+
+              <Link
+                to="/register"
+                className="primary"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {copy.nav.getStarted}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
 
       <section className="masteacon-landing-hero">
         <div className="masteacon-landing-hero-copy">
           <span className="masteacon-landing-eyebrow">
             <span className="masteacon-landing-eyebrow-dot" />
-            KNOWLEDGE INTELLIGENCE · GROUNDED AI
+            {copy.hero.eyebrow}
           </span>
 
           <h1>
-            Turn scattered knowledge into
-            <span> trusted answers.</span>
+            {copy.hero.titleStart}
+            <span>{copy.hero.titleAccent}</span>
           </h1>
 
           <p className="masteacon-landing-hero-description">
-            Upload your knowledge. Ask naturally. Get grounded answers with
-            traceable sources — powered by semantic search, RAG and AI agents.
+            {copy.hero.description}
           </p>
 
           <div className="masteacon-landing-hero-actions">
-            <Link to="/register" className="masteacon-landing-primary">
-              Start building
+            <Link
+              to="/register"
+              className="masteacon-landing-primary"
+            >
+              {copy.hero.primary}
               <span aria-hidden="true">→</span>
             </Link>
 
-            <a href="#product" className="masteacon-landing-secondary">
-              Explore the platform
+            <a
+              href="#product"
+              className="masteacon-landing-secondary"
+            >
+              {copy.hero.secondary}
             </a>
           </div>
 
           <div className="masteacon-landing-trust-row">
-            <span>Source grounded</span>
-            <span>Semantic search</span>
-            <span>Secure workspaces</span>
-            <span>AI agents</span>
+            {copy.hero.signals.map((signal) => (
+              <span key={signal}>{signal}</span>
+            ))}
           </div>
         </div>
 
-        <div
-          className="masteacon-landing-hero-visual"
-          aria-label="Masteacon knowledge intelligence preview"
-        >
+        <div className="masteacon-landing-hero-visual">
           <div className="masteacon-landing-radar">
             <div className="masteacon-landing-radar-ring ring-one" />
             <div className="masteacon-landing-radar-ring ring-two" />
@@ -170,21 +230,21 @@ export function LandingPage() {
           </div>
 
           <div className="masteacon-landing-intelligence-card card-one">
-            <span>Grounded answer</span>
-            <strong>Evidence attached</strong>
-            <small>3 source chunks matched</small>
+            <span>{copy.preview.ask}</span>
+            <strong>{copy.preview.answerReady}</strong>
+            <small>{copy.preview.grounded}</small>
           </div>
 
           <div className="masteacon-landing-intelligence-card card-two">
-            <span>Knowledge health</span>
-            <strong>Ready</strong>
-            <small>Workspace indexed</small>
+            <span>{copy.preview.tabs.command.metricLabel}</span>
+            <strong>{copy.preview.tabs.command.metricValue}</strong>
+            <small>{copy.preview.liveSignal}</small>
           </div>
 
           <div className="masteacon-landing-intelligence-card card-three">
-            <span>Agent trace</span>
-            <strong>4 tools</strong>
-            <small>Execution observable</small>
+            <span>{copy.preview.tabs.agent.metricLabel}</span>
+            <strong>{copy.preview.tabs.agent.metricValue}</strong>
+            <small>{copy.preview.tabs.agent.label}</small>
           </div>
         </div>
       </section>
@@ -194,18 +254,15 @@ export function LandingPage() {
         className="masteacon-landing-section masteacon-product-showcase"
       >
         <div className="masteacon-landing-section-heading">
-          <span>THE PLATFORM</span>
+          <span>{copy.preview.sectionEyebrow}</span>
 
           <h2>
-            One intelligence layer.
+            {copy.preview.sectionTitle}
             <br />
-            Four ways to work.
+            {copy.preview.sectionTitleSecond}
           </h2>
 
-          <p>
-            From ingestion to retrieval and execution, Masteacon keeps the
-            experience connected to the knowledge behind every answer.
-          </p>
+          <p>{copy.preview.sectionDescription}</p>
         </div>
 
         <div className="masteacon-product-tabs" role="tablist">
@@ -237,7 +294,7 @@ export function LandingPage() {
 
             <span className="masteacon-product-window-status">
               <i />
-              Grounded
+              {copy.preview.grounded}
             </span>
           </div>
 
@@ -249,7 +306,9 @@ export function LandingPage() {
                 {previewTabs.map((tab) => (
                   <span
                     key={tab.key}
-                    className={activePreview === tab.key ? "active" : ""}
+                    className={
+                      activePreview === tab.key ? "active" : ""
+                    }
                   >
                     {tab.label}
                   </span>
@@ -267,10 +326,10 @@ export function LandingPage() {
               <div className="masteacon-product-preview-grid">
                 <article className="masteacon-product-preview-primary">
                   <span className="masteacon-preview-label">
-                    Ask Masteacon
+                    {copy.preview.ask}
                   </span>
 
-                  <h4>What does our knowledge say?</h4>
+                  <h4>{copy.preview.question}</h4>
 
                   <div className="masteacon-preview-answer">
                     <div className="masteacon-preview-answer-mark">
@@ -278,11 +337,8 @@ export function LandingPage() {
                     </div>
 
                     <div>
-                      <strong>Grounded response ready</strong>
-                      <p>
-                        Relevant context was retrieved and evaluated before the
-                        answer was generated.
-                      </p>
+                      <strong>{copy.preview.answerReady}</strong>
+                      <p>{copy.preview.answerDescription}</p>
                     </div>
                   </div>
 
@@ -296,13 +352,13 @@ export function LandingPage() {
                   <article>
                     <span>{selectedPreview.metricLabel}</span>
                     <strong>{selectedPreview.metricValue}</strong>
-                    <small>Live workspace signal</small>
+                    <small>{copy.preview.liveSignal}</small>
                   </article>
 
                   <article>
-                    <span>Retrieval</span>
-                    <strong>Semantic</strong>
-                    <small>Context before generation</small>
+                    <span>{copy.preview.relevantContext}</span>
+                    <strong>{copy.preview.grounded}</strong>
+                    <small>{copy.preview.liveSignal}</small>
                   </article>
                 </div>
               </div>
@@ -316,29 +372,26 @@ export function LandingPage() {
         className="masteacon-landing-section masteacon-problem-section"
       >
         <div className="masteacon-problem-heading">
-          <span>WHY MASTEACON</span>
+          <span>{copy.problem.eyebrow}</span>
 
           <h2>
-            Your knowledge is everywhere.
+            {copy.problem.title}
             <br />
-            <em>Your answers shouldn't be.</em>
+            <em>{copy.problem.accent}</em>
           </h2>
 
-          <p>
-            Masteacon turns fragmented organizational knowledge into a trusted,
-            searchable layer your team can actually use.
-          </p>
+          <p>{copy.problem.description}</p>
         </div>
 
         <div className="masteacon-problem-grid">
           <article className="masteacon-problem-card without">
             <div className="masteacon-problem-card-heading">
-              <span>Without Masteacon</span>
-              <strong>Fragmented knowledge</strong>
+              <span>{copy.problem.without}</span>
+              <strong>{copy.problem.withoutTitle}</strong>
             </div>
 
             <ul>
-              {withoutMasteacon.map((item) => (
+              {copy.problem.withoutItems.map((item) => (
                 <li key={item}>
                   <span aria-hidden="true">×</span>
                   {item}
@@ -347,14 +400,17 @@ export function LandingPage() {
             </ul>
           </article>
 
-          <article className="masteacon-problem-card with">
+          <article
+            className="masteacon-problem-card with"
+            data-label={copy.problem.badge}
+          >
             <div className="masteacon-problem-card-heading">
-              <span>With Masteacon</span>
-              <strong>Grounded intelligence</strong>
+              <span>{copy.problem.with}</span>
+              <strong>{copy.problem.withTitle}</strong>
             </div>
 
             <ul>
-              {withMasteacon.map((item) => (
+              {copy.problem.withItems.map((item) => (
                 <li key={item}>
                   <span aria-hidden="true">✓</span>
                   {item}
@@ -370,172 +426,139 @@ export function LandingPage() {
         className="masteacon-landing-section masteacon-how-section"
       >
         <div className="masteacon-how-intro">
-          <span>HOW IT WORKS</span>
-          <h2>From documents to dependable intelligence.</h2>
+          <span>{copy.steps.eyebrow}</span>
+          <h2>{copy.steps.title}</h2>
         </div>
 
         <div className="masteacon-how-grid">
-          <article>
-            <span>01</span>
-            <h3>Bring your knowledge</h3>
-            <p>Upload PDF, DOCX and TXT content into a focused workspace.</p>
-          </article>
+          {copy.steps.items.map((item) => (
+            <article key={item.number}>
+              <span>{item.number}</span>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-          <article>
-            <span>02</span>
-            <h3>Build intelligence</h3>
-            <p>
-              Masteacon chunks, embeds and indexes content for semantic
-              retrieval.
-            </p>
-          </article>
+      <section
+        id="architecture"
+        className="masteacon-landing-section masteacon-architecture-section"
+      >
+        <div className="masteacon-architecture-heading">
+          <span>{copy.architecture.eyebrow}</span>
 
-          <article>
-            <span>03</span>
-            <h3>Ask. Verify. Act.</h3>
-            <p>
-              Get grounded answers, inspect sources and run intelligent
-              workflows.
-            </p>
-          </article>
+          <div>
+            <h2>
+              {copy.architecture.title}
+              <br />
+              {copy.architecture.titleSecond}
+            </h2>
+
+            <p>{copy.architecture.description}</p>
+          </div>
+        </div>
+
+        <div className="masteacon-architecture-flow">
+          {copy.architecture.stages.map((stage, index) => (
+            <div key={stage.number} className="masteacon-architecture-stage-fragment">
+              <article>
+                <span>{stage.number}</span>
+                <strong>{stage.title}</strong>
+                <small>{stage.description}</small>
+              </article>
+
+              {index < copy.architecture.stages.length - 1 && (
+                <i>→</i>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="masteacon-architecture-retrieval">
+          <div className="masteacon-architecture-query">
+            <span>{copy.architecture.questionLabel}</span>
+            <strong>{copy.architecture.question}</strong>
+          </div>
+
+          <div className="masteacon-architecture-beam">
+            {copy.architecture.flow.map((item, index) => (
+              <div key={item} className="masteacon-architecture-beam-fragment">
+                <span>{item}</span>
+
+                {index < copy.architecture.flow.length - 1 && (
+                  <i />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="masteacon-architecture-answer">
+            <Logo size={42} mColor="#F5F1E8" />
+
+            <div>
+              <span>{copy.architecture.answerLabel}</span>
+              <strong>{copy.architecture.answerTitle}</strong>
+              <small>{copy.architecture.answerDescription}</small>
+            </div>
+          </div>
+        </div>
+
+        <div className="masteacon-architecture-foot">
+          {copy.architecture.signals.map((signal) => (
+            <span key={signal}>{signal}</span>
+          ))}
         </div>
       </section>
 
       <section className="masteacon-landing-section masteacon-capabilities-section">
         <div className="masteacon-capabilities-heading">
-          <span>CORE CAPABILITIES</span>
+          <span>{copy.capabilities.eyebrow}</span>
 
           <div>
             <h2>
-              Built for knowledge that
+              {copy.capabilities.title}
               <br />
-              needs to stay useful.
+              {copy.capabilities.titleSecond}
             </h2>
 
-            <p>
-              Masteacon connects ingestion, semantic retrieval, grounded
-              generation and agent execution in one focused intelligence
-              platform.
-            </p>
+            <p>{copy.capabilities.description}</p>
           </div>
         </div>
 
         <div className="masteacon-capabilities-grid">
-          <article>
-            <span>01</span>
-            <strong>Knowledge Library</strong>
-            <p>
-              Organize trusted documents inside focused workspaces built for
-              retrieval.
-            </p>
-            <small>PDF · DOCX · TXT</small>
-          </article>
-
-          <article>
-            <span>02</span>
-            <strong>Semantic Search</strong>
-            <p>
-              Find relevant context by meaning instead of relying on exact
-              keyword matches.
-            </p>
-            <small>Vector retrieval</small>
-          </article>
-
-          <article>
-            <span>03</span>
-            <strong>Grounded Q&amp;A</strong>
-            <p>
-              Generate answers from retrieved evidence while keeping the
-              supporting context visible.
-            </p>
-            <small>RAG · Source grounding</small>
-          </article>
-
-          <article>
-            <span>04</span>
-            <strong>AI Agent</strong>
-            <p>
-              Run knowledge-aware workflows with structured tool execution and
-              visible traces.
-            </p>
-            <small>Tool calling</small>
-          </article>
-
-          <article>
-            <span>05</span>
-            <strong>Knowledge Workspaces</strong>
-            <p>
-              Keep documents, retrieval context and intelligent workflows
-              organized around a clear scope.
-            </p>
-            <small>Controlled context</small>
-          </article>
-
-          <article>
-            <span>06</span>
-            <strong>Observability</strong>
-            <p>
-              Inspect retrieval and AI execution signals instead of treating
-              intelligence as a black box.
-            </p>
-            <small>Traceable execution</small>
-          </article>
+          {copy.capabilities.items.map((item) => (
+            <article key={item.number}>
+              <span>{item.number}</span>
+              <strong>{item.title}</strong>
+              <p>{item.description}</p>
+              <small>{item.meta}</small>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="masteacon-landing-section masteacon-audience-section">
         <div className="masteacon-audience-intro">
-          <span>BUILT FOR KNOWLEDGE-HEAVY WORK</span>
+          <span>{copy.audience.eyebrow}</span>
 
           <h2>
-            One intelligence layer.
+            {copy.audience.title}
             <br />
-            Different ways to use it.
+            {copy.audience.titleSecond}
           </h2>
 
-          <p>
-            Wherever teams depend on documents, internal knowledge and repeated
-            research, Masteacon helps turn that information into something
-            searchable and actionable.
-          </p>
+          <p>{copy.audience.description}</p>
         </div>
 
         <div className="masteacon-audience-grid">
-          <article>
-            <span>PRODUCT</span>
-            <h3>Product teams</h3>
-            <p>
-              Search requirements, product notes and internal decisions without
-              losing the context behind them.
-            </p>
-          </article>
-
-          <article>
-            <span>ENGINEERING</span>
-            <h3>Engineering teams</h3>
-            <p>
-              Retrieve technical knowledge, architecture notes and operational
-              context through natural language.
-            </p>
-          </article>
-
-          <article>
-            <span>RESEARCH</span>
-            <h3>Research teams</h3>
-            <p>
-              Explore document collections semantically and keep answers tied
-              to supporting evidence.
-            </p>
-          </article>
-
-          <article>
-            <span>OPERATIONS</span>
-            <h3>Operations</h3>
-            <p>
-              Turn policies, procedures and internal references into a
-              searchable knowledge layer.
-            </p>
-          </article>
+          {copy.audience.items.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -544,140 +567,82 @@ export function LandingPage() {
         className="masteacon-landing-section masteacon-trust-section"
       >
         <div className="masteacon-trust-copy">
-          <span>TRUST &amp; CONTROL</span>
+          <span>{copy.trust.eyebrow}</span>
 
           <h2>
-            AI is more useful when
-            <em> you can see why.</em>
+            {copy.trust.title}
+            <em>{copy.trust.accent}</em>
           </h2>
 
-          <p>
-            Masteacon is designed around controlled context, visible evidence
-            and observable execution so teams can understand what the system
-            used before acting on an answer.
-          </p>
+          <p>{copy.trust.description}</p>
 
           <div className="masteacon-trust-signals">
-            <span><i />Source evidence</span>
-            <span><i />Workspace context</span>
-            <span><i />Retrieval visibility</span>
-            <span><i />Agent traces</span>
+            {copy.trust.signals.map((signal) => (
+              <span key={signal}>
+                <i />
+                {signal}
+              </span>
+            ))}
           </div>
         </div>
 
         <div className="masteacon-trust-visual">
           <div className="masteacon-trust-visual-top">
-            <span>MASTEACON / GROUNDED EXECUTION</span>
-            <strong>Evidence before generation</strong>
+            <span>{copy.trust.flowLabel}</span>
+            <strong>{copy.trust.flowTitle}</strong>
           </div>
 
           <div className="masteacon-trust-flow">
-            <div>
-              <span>01</span>
-              <strong>Knowledge</strong>
-              <small>Trusted workspace documents</small>
-            </div>
+            {copy.trust.stages.map((stage, index) => (
+              <div key={stage.number} className="masteacon-trust-stage-fragment">
+                <div>
+                  <span>{stage.number}</span>
+                  <strong>{stage.title}</strong>
+                  <small>{stage.description}</small>
+                </div>
 
-            <i>→</i>
-
-            <div>
-              <span>02</span>
-              <strong>Retrieval</strong>
-              <small>Semantic context selection</small>
-            </div>
-
-            <i>→</i>
-
-            <div>
-              <span>03</span>
-              <strong>Grounding</strong>
-              <small>Evidence-aware generation</small>
-            </div>
+                {index < copy.trust.stages.length - 1 && (
+                  <i>→</i>
+                )}
+              </div>
+            ))}
           </div>
 
           <div className="masteacon-trust-source">
             <Logo size={28} mColor="#F5F1E8" />
 
             <div>
-              <span>Grounding status</span>
-              <strong>Sources connected</strong>
+              <span>{copy.trust.statusLabel}</span>
+              <strong>{copy.trust.statusTitle}</strong>
             </div>
 
-            <small>READY</small>
+            <small>{copy.trust.ready}</small>
           </div>
         </div>
       </section>
 
       <section className="masteacon-landing-section masteacon-faq-section">
         <div className="masteacon-faq-heading">
-          <span>FAQ</span>
+          <span>{copy.faq.eyebrow}</span>
 
           <h2>
-            A few things worth
+            {copy.faq.title}
             <br />
-            knowing first.
+            {copy.faq.titleSecond}
           </h2>
         </div>
 
         <div className="masteacon-faq-list">
-          <details>
-            <summary>
-              <span>What is Masteacon?</span>
-              <i>+</i>
-            </summary>
-            <p>
-              Masteacon is a knowledge intelligence platform for organizing
-              documents, retrieving relevant context and generating grounded
-              answers from trusted information.
-            </p>
-          </details>
+          {copy.faq.items.map((item) => (
+            <details key={item.question}>
+              <summary>
+                <span>{item.question}</span>
+                <i>+</i>
+              </summary>
 
-          <details>
-            <summary>
-              <span>How is this different from normal keyword search?</span>
-              <i>+</i>
-            </summary>
-            <p>
-              Semantic retrieval searches for contextual meaning, allowing
-              related information to be found even when the exact wording in
-              the document differs from the question.
-            </p>
-          </details>
-
-          <details>
-            <summary>
-              <span>What does a grounded answer mean?</span>
-              <i>+</i>
-            </summary>
-            <p>
-              A grounded answer is generated using retrieved knowledge as
-              context, with supporting sources kept visible so the result can
-              be inspected.
-            </p>
-          </details>
-
-          <details>
-            <summary>
-              <span>Which document formats are supported?</span>
-              <i>+</i>
-            </summary>
-            <p>
-              The current knowledge ingestion flow supports PDF, DOCX and TXT
-              documents.
-            </p>
-          </details>
-
-          <details>
-            <summary>
-              <span>What can the Masteacon AI Agent do?</span>
-              <i>+</i>
-            </summary>
-            <p>
-              The agent can execute supported knowledge and workspace tools,
-              return structured results and expose the tool trace used during
-              execution.
-            </p>
-          </details>
+              <p>{item.answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 
@@ -686,12 +651,12 @@ export function LandingPage() {
         className="masteacon-landing-section masteacon-landing-final-cta"
       >
         <div>
-          <span>TRUSTED KNOWLEDGE · GROUNDED INTELLIGENCE</span>
-          <h2>Your knowledge already exists. Make it usable.</h2>
+          <span>{copy.finalCta.eyebrow}</span>
+          <h2>{copy.finalCta.title}</h2>
         </div>
 
         <Link to="/register">
-          Build your workspace
+          {copy.finalCta.button}
           <span aria-hidden="true">→</span>
         </Link>
       </section>
@@ -699,13 +664,11 @@ export function LandingPage() {
       <footer className="masteacon-landing-footer">
         <Logo size={32} withWordmark />
 
-        <p>
-          Knowledge intelligence for teams that need answers they can trust.
-        </p>
+        <p>{copy.footer.description}</p>
 
         <div>
-          <Link to="/login">Sign in</Link>
-          <Link to="/register">Create account</Link>
+          <Link to="/login">{copy.footer.signIn}</Link>
+          <Link to="/register">{copy.footer.create}</Link>
         </div>
       </footer>
     </main>
