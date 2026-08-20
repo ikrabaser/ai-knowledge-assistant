@@ -1,9 +1,14 @@
 interface LogoProps {
   size?: number;
   withWordmark?: boolean;
+  mColor?: string;
 }
 
-export function Logo({ size = 28, withWordmark = false }: LogoProps) {
+export function Logo({
+  size = 28,
+  withWordmark = false,
+  mColor,
+}: LogoProps) {
   return (
     <span className="logo">
       <svg
@@ -38,8 +43,9 @@ export function Logo({ size = 28, withWordmark = false }: LogoProps) {
         </defs>
 
         <path
+          className="logo-m-shape"
           d="M7 52V24L21 37L32 28L43 37L57 24V52H49V40L32 55L15 40V52H7Z"
-          fill="currentColor"
+          style={{ fill: mColor ?? "currentColor" }}
         />
 
         <path

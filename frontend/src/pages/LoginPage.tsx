@@ -130,7 +130,7 @@ export function LoginPage() {
               <div className="masteacon-auth-beacon-ring masteacon-auth-beacon-ring-three" />
 
               <div className="masteacon-auth-beacon-mark">
-                <Logo size={100} />
+                <Logo size={100} mColor="#F5F1E8" />
               </div>
 
               <div className="masteacon-auth-beacon-light" />
