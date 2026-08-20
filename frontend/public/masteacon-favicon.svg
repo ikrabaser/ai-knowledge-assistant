@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="beacon" x1="26" y1="17" x2="39" y2="53" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F7CE76"/>
+      <stop offset="35%" stop-color="#32C6D5"/>
+      <stop offset="68%" stop-color="#168BBE"/>
+      <stop offset="100%" stop-color="#2458C5"/>
+    </linearGradient>
+    <radialGradient id="light">
+      <stop offset="0%" stop-color="#FFFDF4"/>
+      <stop offset="42%" stop-color="#F7C65B"/>
+      <stop offset="100%" stop-color="#F7C65B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="#071521"/>
+
+  <path
+    d="M7 52V24L21 37L32 28L43 37L57 24V52H49V40L32 55L15 40V52H7Z"
+    fill="#F5F1E8"
+  />
+
+  <path
+    d="M32 14L40 23H36.2L39 47L32 54L25 47L27.8 23H24L32 14Z"
+    fill="url(#beacon)"
+  />
+
+  <path
+    d="M20 23C22.5 18.6 26.8 16 32 16C37.2 16 41.5 18.6 44 23"
+    stroke="#38BDD3"
+    stroke-width="1.7"
+    stroke-linecap="round"
+  />
+
+  <circle cx="32" cy="25" r="9" fill="url(#light)"/>
+
+  <path
+    d="M32 18.5L33.2 23.8L38.5 25L33.2 26.2L32 31.5L30.8 26.2L25.5 25L30.8 23.8L32 18.5Z"
+    fill="#FFFBEF"
+  />
+</svg>

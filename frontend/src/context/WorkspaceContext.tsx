@@ -3,7 +3,29 @@ import * as api from "../api/endpoints";
 import type { WorkspaceResponse } from "../api/types";
 import { useAuth } from "./AuthContext";
 
-const WORKSPACE_STORAGE_KEY = "aika_active_workspace_id";
+const WORKSPACE_STORAGE_KEY = "masteacon_active_workspace_id";
+const LEGACY_WORKSPACE_STORAGE_KEY = "aika_active_workspace_id";
+
+function readStoredWorkspaceId(): number | null {
+  const stored =
+    localStorage.getItem(WORKSPACE_STORAGE_KEY) ??
+    localStorage.getItem(LEGACY_WORKSPACE_STORAGE_KEY);
+
+  if (!stored) return null;
+
+  const workspaceId = Number(stored);
+
+  if (!Number.isInteger(workspaceId) || workspaceId <= 0) {
+    localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_WORKSPACE_STORAGE_KEY);
+    return null;
+  }
+
+  localStorage.setItem(WORKSPACE_STORAGE_KEY, String(workspaceId));
+  localStorage.removeItem(LEGACY_WORKSPACE_STORAGE_KEY);
+
+  return workspaceId;
+}
 
 interface WorkspaceContextValue {
   workspaces: WorkspaceResponse[];
@@ -19,10 +41,8 @@ const WorkspaceContext = createContext<WorkspaceContextValue | undefined>(undefi
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<number | null>(() => {
-    const stored = localStorage.getItem(WORKSPACE_STORAGE_KEY);
-    return stored ? Number(stored) : null;
-  });
+  const [activeWorkspaceId, setActiveWorkspaceId] =
+    useState<number | null>(readStoredWorkspaceId);
   const [isLoading, setIsLoading] = useState(false);
 
   const refresh = useCallback(async () => {

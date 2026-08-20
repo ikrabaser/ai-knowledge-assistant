@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 type ThemeMode = "light" | "dark" | "system";
 
-const THEME_STORAGE_KEY = "aika_theme_mode";
+const THEME_STORAGE_KEY = "masteacon_theme_mode";
+const LEGACY_THEME_STORAGE_KEY = "aika_theme_mode";
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -19,10 +20,30 @@ function resolveTheme(mode: ThemeMode): "light" | "dark" {
   return mode;
 }
 
+function readStoredTheme(): ThemeMode {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+
+  if (stored === "light" || stored === "dark" || stored === "system") {
+    return stored;
+  }
+
+  const legacyStored = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+
+  if (
+    legacyStored === "light" ||
+    legacyStored === "dark" ||
+    legacyStored === "system"
+  ) {
+    localStorage.setItem(THEME_STORAGE_KEY, legacyStored);
+    localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+    return legacyStored;
+  }
+
+  return "dark";
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(
-    () => (localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null) ?? "dark",
-  );
+  const [mode, setModeState] = useState<ThemeMode>(readStoredTheme);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => resolveTheme(mode));
 
   useEffect(() => {
