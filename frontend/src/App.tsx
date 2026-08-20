@@ -6,6 +6,7 @@ import { WorkspaceProvider } from "./context/WorkspaceContext";
 import { AgentPage } from "./pages/AgentPage";
 import { ChatPage } from "./pages/ChatPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -16,6 +17,7 @@ export default function App() {
     <AuthProvider>
       <WorkspaceProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -31,7 +33,6 @@ export default function App() {
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/agent" element={<AgentPage />} />
-            <Route path="/" element={<Navigate to="/overview" replace />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
