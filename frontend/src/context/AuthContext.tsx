@@ -3,7 +3,23 @@ import * as api from "../api/endpoints";
 import { setAuthToken } from "../api/client";
 import type { UserResponse } from "../api/types";
 
-const TOKEN_STORAGE_KEY = "aika_access_token";
+const TOKEN_STORAGE_KEY = "masteacon_access_token";
+const LEGACY_TOKEN_STORAGE_KEY = "aika_access_token";
+
+function readStoredToken(): string | null {
+  const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) return stored;
+
+  const legacyStored = localStorage.getItem(LEGACY_TOKEN_STORAGE_KEY);
+
+  if (legacyStored) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, legacyStored);
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+    return legacyStored;
+  }
+
+  return null;
+}
 
 interface AuthContextValue {
   user: UserResponse | null;
@@ -20,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const storedToken = readStoredToken();
     if (!storedToken) {
       setIsLoading(false);
       return;
@@ -61,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
     setAuthToken(null);
     setUser(null);
   }, []);

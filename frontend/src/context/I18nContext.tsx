@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { translations, type Locale, type TranslationKey } from "../i18n/translations";
 
-const LOCALE_STORAGE_KEY = "aika_locale";
+const LOCALE_STORAGE_KEY = "masteacon_locale";
+const LEGACY_LOCALE_STORAGE_KEY = "aika_locale";
 
 interface I18nContextValue {
   locale: Locale;
@@ -14,14 +15,28 @@ const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 function detectDefaultLocale(): Locale {
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
   if (stored === "en" || stored === "tr") return stored;
+
+  const legacyStored = localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
+
+  if (legacyStored === "en" || legacyStored === "tr") {
+    localStorage.setItem(LOCALE_STORAGE_KEY, legacyStored);
+    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+    return legacyStored;
+  }
+
   return navigator.language.toLowerCase().startsWith("tr") ? "tr" : "en";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(detectDefaultLocale);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   const setLocale = useCallback((next: Locale) => {
     localStorage.setItem(LOCALE_STORAGE_KEY, next);
+    document.documentElement.lang = next;
     setLocaleState(next);
   }, []);
 

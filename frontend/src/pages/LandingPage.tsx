@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { Logo } from "../components/Logo";
@@ -11,6 +11,22 @@ type PreviewKey = "command" | "library" | "chat" | "agent";
 export function LandingPage() {
   const { locale } = useI18n();
   const copy = landingTranslations[locale];
+
+  useEffect(() => {
+    document.title = copy.seo.title;
+
+    let description = document.querySelector<HTMLMetaElement>(
+      'meta[name="description"]',
+    );
+
+    if (!description) {
+      description = document.createElement("meta");
+      description.name = "description";
+      document.head.appendChild(description);
+    }
+
+    description.content = copy.seo.description;
+  }, [copy.seo.description, copy.seo.title]);
 
   const [activePreview, setActivePreview] =
     useState<PreviewKey>("command");
@@ -661,14 +677,43 @@ export function LandingPage() {
         </Link>
       </section>
 
-      <footer className="masteacon-landing-footer">
-        <Logo size={32} withWordmark />
+      <footer className="masteacon-landing-footer masteacon-landing-footer-full">
+        <div className="masteacon-footer-brand">
+          <Logo size={34} withWordmark />
 
-        <p>{copy.footer.description}</p>
+          <p>{copy.footer.description}</p>
 
-        <div>
+          <span>© 2026 Masteacon</span>
+        </div>
+
+        <div className="masteacon-footer-column">
+          <strong>{copy.nav.product}</strong>
+
+          <a href="#product">{copy.preview.tabs.command.label}</a>
+          <a href="#product">{copy.preview.tabs.library.label}</a>
+          <a href="#product">{copy.preview.tabs.chat.label}</a>
+          <a href="#product">{copy.preview.tabs.agent.label}</a>
+        </div>
+
+        <div className="masteacon-footer-column">
+          <strong>{copy.nav.explore}</strong>
+
+          <a href="#solutions">{copy.nav.solutions}</a>
+          <a href="#how-it-works">{copy.nav.howItWorks}</a>
+          <a href="#architecture">{copy.nav.architecture}</a>
+          <a href="#security">{copy.nav.security}</a>
+        </div>
+
+        <div className="masteacon-footer-column masteacon-footer-account">
+          <strong>Masteacon</strong>
+
           <Link to="/login">{copy.footer.signIn}</Link>
           <Link to="/register">{copy.footer.create}</Link>
+
+          <Link to="/register" className="masteacon-footer-primary">
+            {copy.nav.getStarted}
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </footer>
     </main>

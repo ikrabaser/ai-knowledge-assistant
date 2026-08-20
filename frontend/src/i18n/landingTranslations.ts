@@ -1,6 +1,12 @@
 import type { Locale } from "./translations";
 
 const en = {
+  seo: {
+    title: "Masteacon — Trusted answers from your knowledge",
+    description:
+      "Masteacon brings your knowledge together so teams can find relevant information, ask naturally, and get clear answers with visible supporting sources.",
+  },
+
   nav: {
     product: "Product",
     solutions: "Solutions",
@@ -370,6 +376,12 @@ const en = {
 };
 
 const tr: typeof en = {
+  seo: {
+    title: "Masteacon — Bilginizden güvenilir yanıtlar",
+    description:
+      "Masteacon bilginizi bir araya getirir; ekiplerin ilgili bilgiye ulaşmasını, doğal şekilde soru sormasını ve görünür kaynaklarla desteklenen net yanıtlar almasını sağlar.",
+  },
+
   nav: {
     product: "Ürün",
     solutions: "Çözümler",
