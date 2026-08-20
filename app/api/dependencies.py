@@ -3,9 +3,11 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis
 
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
+from app.core.redis import get_redis_client
 from app.core.exceptions import InvalidCredentialsError
 from app.core.security import decode_access_token
 from app.models.user import User
@@ -20,6 +22,7 @@ from app.repositories.message_repository import MessageRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.workspace_repository import WorkspaceRepository
 from app.services.auth_service import AuthService
+from app.services.auth_protection_service import AuthProtectionService
 from app.services.conversation_service import ConversationService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
@@ -58,6 +61,16 @@ def get_auth_service(
     user_repository: UserRepository = Depends(get_user_repository),
 ) -> AuthService:
     return AuthService(user_repository=user_repository, settings=settings)
+
+
+def get_auth_protection_service(
+    settings: Settings = Depends(get_settings),
+    redis_client: Redis = Depends(get_redis_client),
+) -> AuthProtectionService:
+    return AuthProtectionService(
+        redis_client=redis_client,
+        settings=settings,
+    )
 
 
 async def get_current_user(

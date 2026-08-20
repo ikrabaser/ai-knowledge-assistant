@@ -10,6 +10,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
 
+    # Hidden bot-trap field. Legitimate clients leave this empty.
+    website: str = Field(default="", max_length=200)
+
 
 class LoginRequest(BaseModel):
     """Request body for POST /api/v1/auth/login."""

@@ -310,3 +310,41 @@ class FakeMessageRepository:
 
     async def commit(self) -> None:
         pass
+
+
+class FakeAuthProtectionService:
+    """Deterministic auth-protection fake used by route tests."""
+
+    def __init__(self) -> None:
+        self.blocked_actions: set[str] = set()
+        self.retry_after = 60
+        self.checks: list[tuple[str, str]] = []
+        self.resets: list[tuple[str, str]] = []
+
+    @staticmethod
+    def is_honeypot_triggered(value: str | None) -> bool:
+        return bool(value and value.strip())
+
+    async def check_rate_limit(
+        self,
+        action: str,
+        identifier: str,
+    ):
+        from app.services.auth_protection_service import RateLimitResult
+
+        self.checks.append((action, identifier))
+
+        if action in self.blocked_actions:
+            return RateLimitResult(
+                allowed=False,
+                retry_after=self.retry_after,
+            )
+
+        return RateLimitResult(allowed=True)
+
+    async def reset_rate_limit(
+        self,
+        action: str,
+        identifier: str,
+    ) -> None:
+        self.resets.append((action, identifier))

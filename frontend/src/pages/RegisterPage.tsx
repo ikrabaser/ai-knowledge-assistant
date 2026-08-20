@@ -14,6 +14,7 @@ export function RegisterPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [website, setWebsite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,7 +88,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await register(email, password);
+      await register(email, password, website);
       navigate("/overview");
     } catch (err) {
       setError(
@@ -220,6 +221,25 @@ export function RegisterPage() {
               className="masteacon-auth-form"
               onSubmit={handleSubmit}
             >
+              <div
+                className="masteacon-auth-honeypot"
+                aria-hidden="true"
+              >
+                <label htmlFor="website">
+                  Website
+                </label>
+
+                <input
+                  id="website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </div>
+
               <div className="masteacon-auth-field">
                 <label htmlFor="email">
                   {t("auth.email")}

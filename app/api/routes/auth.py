@@ -1,35 +1,120 @@
 """Authentication endpoints: register, login, current-user lookup."""
-from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_auth_service, get_current_user
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from app.api.dependencies import (
+    get_auth_protection_service,
+    get_auth_service,
+    get_current_user,
+)
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.schemas.auth import (
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
+)
+from app.services.auth_protection_service import AuthProtectionService
 from app.services.auth_service import AuthService
+
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
+def _client_identifier(request: Request) -> str:
+    if request.client is None:
+        return "unknown"
+
+    return request.client.host
+
+
+async def _enforce_rate_limit(
+    *,
+    protection: AuthProtectionService,
+    action: str,
+    identifier: str,
+) -> None:
+    result = await protection.check_rate_limit(
+        action=action,
+        identifier=identifier,
+    )
+
+    if result.allowed:
+        return
+
+    raise HTTPException(
+        status_code=429,
+        detail="Too many authentication attempts. Please try again later.",
+        headers={"Retry-After": str(result.retry_after)},
+    )
+
+
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(
-    request: RegisterRequest,
+    payload: RegisterRequest,
+    http_request: Request,
     auth_service: AuthService = Depends(get_auth_service),
+    protection: AuthProtectionService = Depends(get_auth_protection_service),
 ) -> TokenResponse:
     """Create a new user account and return an access token."""
-    _, token = await auth_service.register(email=request.email, password=request.password)
+
+    identifier = _client_identifier(http_request)
+
+    await _enforce_rate_limit(
+        protection=protection,
+        action="register",
+        identifier=identifier,
+    )
+
+    if protection.is_honeypot_triggered(payload.website):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid registration request.",
+        )
+
+    _, token = await auth_service.register(
+        email=payload.email,
+        password=payload.password,
+    )
+
     return TokenResponse(access_token=token)
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    request: LoginRequest,
+    payload: LoginRequest,
+    http_request: Request,
     auth_service: AuthService = Depends(get_auth_service),
+    protection: AuthProtectionService = Depends(get_auth_protection_service),
 ) -> TokenResponse:
     """Authenticate with email/password and return an access token."""
-    _, token = await auth_service.login(email=request.email, password=request.password)
+
+    identifier = _client_identifier(http_request)
+
+    await _enforce_rate_limit(
+        protection=protection,
+        action="login",
+        identifier=identifier,
+    )
+
+    _, token = await auth_service.login(
+        email=payload.email,
+        password=payload.password,
+    )
+
+    # A valid login ends the current failed-attempt window for this client.
+    await protection.reset_rate_limit(
+        action="login",
+        identifier=identifier,
+    )
+
     return TokenResponse(access_token=token)
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse:
+async def get_me(
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
     """Return the currently authenticated user."""
+
     return UserResponse.model_validate(current_user)
