@@ -5,12 +5,14 @@ import { AuthProvider } from "./context/AuthContext";
 import { WorkspaceProvider } from "./context/WorkspaceContext";
 import { AgentPage } from "./pages/AgentPage";
 import { ChatPage } from "./pages/ChatPage";
+import { CheckEmailPage } from "./pages/CheckEmailPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { WorkspacesPage } from "./pages/WorkspacesPage";
 
 export default function App() {
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/check-email" element={<CheckEmailPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           <Route
             element={

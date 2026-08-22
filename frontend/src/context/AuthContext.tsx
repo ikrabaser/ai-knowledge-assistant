@@ -79,15 +79,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       website = "",
       turnstileToken = "",
     ) => {
-      const { access_token } = await api.register(
+      await api.register(
         email,
         password,
         website,
         turnstileToken,
       );
-      await applyToken(access_token);
+
+      // Registration does not start an authenticated browser session.
+      // The user must verify their email before continuing.
     },
-    [applyToken],
+    [],
   );
 
   const logout = useCallback(() => {
