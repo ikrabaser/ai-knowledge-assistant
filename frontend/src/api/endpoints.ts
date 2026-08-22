@@ -15,8 +15,15 @@ import type {
 
 // --- Auth ---
 
-export function register(email: string, password: string): Promise<TokenResponse> {
-  return apiRequest("/api/v1/auth/register", { method: "POST", json: { email, password } });
+export function register(
+  email: string,
+  password: string,
+  website = "",
+): Promise<TokenResponse> {
+  return apiRequest("/api/v1/auth/register", {
+    method: "POST",
+    json: { email, password, website },
+  });
 }
 
 export function login(email: string, password: string): Promise<TokenResponse> {

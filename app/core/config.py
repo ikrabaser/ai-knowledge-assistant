@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Public authentication abuse protection
+    auth_rate_limit_enabled: bool = True
+    auth_register_rate_limit: int = 5
+    auth_register_rate_window_seconds: int = 900
+    auth_login_rate_limit: int = 10
+    auth_login_rate_window_seconds: int = 300
+
     # Conversation history — bounds how much prior chat context is fed back into
     # the RAG prompt, so a long-running conversation can't grow the prompt without limit.
     conversation_history_max_messages: int = 10
