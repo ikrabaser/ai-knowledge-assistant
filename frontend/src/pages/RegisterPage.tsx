@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Link, useNavigate } from "react-router-dom";
 
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
@@ -12,9 +13,15 @@ export function RegisterPage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
 
+  const turnstileSiteKey =
+    import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() ?? "";
+  const turnstileRequired = Boolean(turnstileSiteKey);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [website, setWebsite] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,10 +92,25 @@ export function RegisterPage() {
     e.preventDefault();
 
     setError(null);
+
+    if (turnstileRequired && !turnstileToken) {
+      setError(
+        locale === "tr"
+          ? "Lütfen güvenlik doğrulamasını tamamlayın."
+          : "Please complete the security verification.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await register(email, password, website);
+      await register(
+        email,
+        password,
+        website,
+        turnstileToken ?? "",
+      );
       navigate("/overview");
     } catch (err) {
       setError(
@@ -96,6 +118,11 @@ export function RegisterPage() {
           ? err.message
           : "Registration failed.",
       );
+
+      if (turnstileRequired) {
+        setTurnstileToken(null);
+        setTurnstileKey((current) => current + 1);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -323,10 +350,29 @@ export function RegisterPage() {
                 </div>
               </div>
 
+              {turnstileRequired && (
+                <div className="masteacon-turnstile">
+                  <Turnstile
+                    key={turnstileKey}
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                    options={{
+                      action: "register",
+                      theme: "auto",
+                    }}
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
                 className="masteacon-auth-submit"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  (turnstileRequired && !turnstileToken)
+                }
               >
                 <span>
                   {isSubmitting
