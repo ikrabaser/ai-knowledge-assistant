@@ -348,3 +348,26 @@ class FakeAuthProtectionService:
         identifier: str,
     ) -> None:
         self.resets.append((action, identifier))
+
+
+class FakeTurnstileService:
+    """Deterministic Turnstile fake used by authentication route tests."""
+
+    def __init__(self) -> None:
+        self.success = True
+        self.calls: list[tuple[str, str | None]] = []
+
+    async def verify(
+        self,
+        *,
+        token: str,
+        remote_ip: str | None = None,
+    ):
+        from app.services.turnstile_service import TurnstileVerificationResult
+
+        self.calls.append((token, remote_ip))
+
+        return TurnstileVerificationResult(
+            success=self.success,
+            action="register" if self.success else None,
+        )

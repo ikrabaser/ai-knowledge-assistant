@@ -6,6 +6,7 @@ from app.api.dependencies import (
     get_auth_protection_service,
     get_auth_service,
     get_current_user,
+    get_turnstile_service,
 )
 from app.models.user import User
 from app.schemas.auth import (
@@ -16,6 +17,7 @@ from app.schemas.auth import (
 )
 from app.services.auth_protection_service import AuthProtectionService
 from app.services.auth_service import AuthService
+from app.services.turnstile_service import TurnstileService
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -55,6 +57,7 @@ async def register(
     http_request: Request,
     auth_service: AuthService = Depends(get_auth_service),
     protection: AuthProtectionService = Depends(get_auth_protection_service),
+    turnstile: TurnstileService = Depends(get_turnstile_service),
 ) -> TokenResponse:
     """Create a new user account and return an access token."""
 
@@ -70,6 +73,17 @@ async def register(
         raise HTTPException(
             status_code=400,
             detail="Invalid registration request.",
+        )
+
+    verification = await turnstile.verify(
+        token=payload.turnstile_token,
+        remote_ip=identifier,
+    )
+
+    if not verification.success:
+        raise HTTPException(
+            status_code=400,
+            detail="Turnstile verification failed.",
         )
 
     _, token = await auth_service.register(

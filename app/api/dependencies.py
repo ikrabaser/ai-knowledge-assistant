@@ -23,6 +23,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.workspace_repository import WorkspaceRepository
 from app.services.auth_service import AuthService
 from app.services.auth_protection_service import AuthProtectionService
+from app.services.turnstile_service import TurnstileService
 from app.services.conversation_service import ConversationService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
@@ -71,6 +72,12 @@ def get_auth_protection_service(
         redis_client=redis_client,
         settings=settings,
     )
+
+
+def get_turnstile_service(
+    settings: Settings = Depends(get_settings),
+) -> TurnstileService:
+    return TurnstileService(settings=settings)
 
 
 async def get_current_user(

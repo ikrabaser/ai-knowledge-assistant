@@ -12,6 +12,7 @@ class RegisterRequest(BaseModel):
 
     # Hidden bot-trap field. Legitimate clients leave this empty.
     website: str = Field(default="", max_length=200)
+    turnstile_token: str = Field(default="", max_length=2048)
 
 
 class LoginRequest(BaseModel):
