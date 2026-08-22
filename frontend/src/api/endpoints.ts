@@ -112,3 +112,31 @@ export function postMessage(conversationId: number, content: string): Promise<Me
 export function agentAsk(question: string): Promise<AgentAskResponse> {
   return apiRequest("/api/v1/agent/ask", { method: "POST", json: { question } });
 }
+
+
+export interface EmailVerificationResponse {
+  verified: boolean;
+  message: string;
+}
+
+export interface ResendVerificationResponse {
+  message: string;
+}
+
+export function verifyEmail(
+  token: string,
+): Promise<EmailVerificationResponse> {
+  return apiRequest("/api/v1/auth/verify-email", {
+    method: "POST",
+    json: { token },
+  });
+}
+
+export function resendVerification(
+  email: string,
+): Promise<ResendVerificationResponse> {
+  return apiRequest("/api/v1/auth/resend-verification", {
+    method: "POST",
+    json: { email },
+  });
+}

@@ -111,7 +111,9 @@ export function RegisterPage() {
         website,
         turnstileToken ?? "",
       );
-      navigate("/overview");
+      navigate(
+        `/check-email?email=${encodeURIComponent(email)}`,
+      );
     } catch (err) {
       setError(
         err instanceof Error
