@@ -19,10 +19,16 @@ export function register(
   email: string,
   password: string,
   website = "",
+  turnstileToken = "",
 ): Promise<TokenResponse> {
   return apiRequest("/api/v1/auth/register", {
     method: "POST",
-    json: { email, password, website },
+    json: {
+      email,
+      password,
+      website,
+      turnstile_token: turnstileToken,
+    },
   });
 }
 

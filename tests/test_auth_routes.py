@@ -11,12 +11,17 @@ from app.api.dependencies import (
     get_auth_protection_service,
     get_auth_service,
     get_current_user,
+    get_turnstile_service,
     get_user_repository,
 )
 from app.core.config import get_settings
 from app.main import app
 from app.services.auth_service import AuthService
-from tests.fakes import FakeAuthProtectionService, FakeUserRepository
+from tests.fakes import (
+    FakeAuthProtectionService,
+    FakeTurnstileService,
+    FakeUserRepository,
+)
 
 
 @pytest.fixture
@@ -25,7 +30,12 @@ def auth_protection():
 
 
 @pytest.fixture
-def client(auth_protection):
+def turnstile():
+    return FakeTurnstileService()
+
+
+@pytest.fixture
+def client(auth_protection, turnstile):
     shared_repository = FakeUserRepository()
     settings = get_settings()
 
@@ -38,10 +48,16 @@ def client(auth_protection):
     def _get_auth_protection_service_override():
         return auth_protection
 
+    def _get_turnstile_service_override():
+        return turnstile
+
     app.dependency_overrides[get_user_repository] = _get_user_repository_override
     app.dependency_overrides[get_auth_service] = _get_auth_service_override
     app.dependency_overrides[get_auth_protection_service] = (
         _get_auth_protection_service_override
+    )
+    app.dependency_overrides[get_turnstile_service] = (
+        _get_turnstile_service_override
     )
 
     with TestClient(app) as test_client:
@@ -50,6 +66,7 @@ def client(auth_protection):
     app.dependency_overrides.pop(get_user_repository, None)
     app.dependency_overrides.pop(get_auth_service, None)
     app.dependency_overrides.pop(get_auth_protection_service, None)
+    app.dependency_overrides.pop(get_turnstile_service, None)
     app.dependency_overrides.pop(get_current_user, None)
 
 
@@ -218,3 +235,57 @@ def test_successful_login_resets_rate_limit(
         action == "login"
         for action, _identifier in auth_protection.resets
     )
+
+
+def test_register_verifies_turnstile_token(
+    client: TestClient,
+    turnstile: FakeTurnstileService,
+) -> None:
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "turnstile@example.com",
+            "password": "password123",
+            "turnstile_token": "valid-turnstile-token",
+        },
+    )
+
+    assert response.status_code == 201
+    assert len(turnstile.calls) == 1
+
+    token, remote_ip = turnstile.calls[0]
+    assert token == "valid-turnstile-token"
+    assert remote_ip
+
+
+def test_register_rejects_failed_turnstile_verification(
+    client: TestClient,
+    turnstile: FakeTurnstileService,
+) -> None:
+    turnstile.success = False
+
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "blocked@example.com",
+            "password": "password123",
+            "turnstile_token": "invalid-turnstile-token",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Turnstile verification failed."
+
+    # Verification failure must prevent account creation.
+    turnstile.success = True
+
+    retry = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "blocked@example.com",
+            "password": "password123",
+            "turnstile_token": "valid-turnstile-token",
+        },
+    )
+
+    assert retry.status_code == 201

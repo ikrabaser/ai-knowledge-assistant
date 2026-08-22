@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     auth_login_rate_limit: int = 10
     auth_login_rate_window_seconds: int = 300
 
+    # Cloudflare Turnstile
+    turnstile_enabled: bool = False
+    turnstile_secret_key: str = ""
+
     # Conversation history — bounds how much prior chat context is fed back into
     # the RAG prompt, so a long-running conversation can't grow the prompt without limit.
     conversation_history_max_messages: int = 10
